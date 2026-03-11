@@ -1,0 +1,94 @@
+<div class="page">
+  <div class="page__header">
+    <div>
+      <h1 class="page__title">My Interest Requests</h1>
+      <p class="page__subtitle">Track the status of projects you've shown interest in</p>
+    </div>
+    <a routerLink="/projects" class="btn btn-primary">
+      <i class="bi bi-compass me-2"></i> Explore Projects
+    </a>
+  </div>
+
+  <div class="stats-row">
+    <button class="stat-card" [class.active]="selectedTab() === 'all'" (click)="selectedTab.set('all')">
+      <span class="stat-card__value">{{ stats().total }}</span>
+      <span class="stat-card__label">Total</span>
+    </button>
+    <button class="stat-card stat-card--warning" [class.active]="selectedTab() === 'pending'" (click)="selectedTab.set('pending')">
+      <span class="stat-card__value">{{ stats().pending }}</span>
+      <span class="stat-card__label">Pending</span>
+    </button>
+    <button class="stat-card stat-card--success" [class.active]="selectedTab() === 'approved'" (click)="selectedTab.set('approved')">
+      <span class="stat-card__value">{{ stats().approved }}</span>
+      <span class="stat-card__label">Approved</span>
+    </button>
+    <button class="stat-card stat-card--danger" [class.active]="selectedTab() === 'rejected'" (click)="selectedTab.set('rejected')">
+      <span class="stat-card__value">{{ stats().rejected }}</span>
+      <span class="stat-card__label">Rejected</span>
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="loading">
+      <div class="spinner"></div>
+      <span>Loading your interests...</span>
+    </div>
+  } @else if (filteredInterests().length === 0) {
+    <div class="empty-state">
+      @if (selectedTab() === 'all') {
+        <i class="bi bi-heart"></i>
+        <h3>No interest requests yet</h3>
+        <p>Browse projects and show interest to join exciting work!</p>
+        <a routerLink="/projects" class="btn btn-primary mt-3">
+          <i class="bi bi-compass me-2"></i> Explore Projects
+        </a>
+      } @else {
+        <i class="bi bi-inbox"></i>
+        <h3>No {{ selectedTab() }} requests</h3>
+        <p>You don't have any {{ selectedTab() }} interest requests</p>
+      }
+    </div>
+  } @else {
+    <div class="interest-list">
+      @for (interest of filteredInterests(); track interest.id) {
+        <div class="interest-card" [class.interest-card--approved]="interest.status === 'approved'" [class.interest-card--rejected]="interest.status === 'rejected'">
+          <div class="interest-card__status">
+            <i class="bi {{ getStatusIcon(interest.status) }} text-{{ getStatusClass(interest.status) }}"></i>
+          </div>
+          <div class="interest-card__content">
+            <div class="interest-card__header">
+              @if (interest.project) {
+                <a [routerLink]="['/projects', interest.project.id]" class="interest-card__project">
+                  {{ interest.project.title }}
+                </a>
+              }
+              <span class="badge bg-{{ getStatusClass(interest.status) }}">{{ interest.status }}</span>
+            </div>
+            @if (interest.project) {
+              <p class="interest-card__brief">{{ interest.project.brief }}</p>
+            }
+            @if (interest.message) {
+              <div class="interest-card__message">
+                <i class="bi bi-chat-left-quote me-2"></i>
+                "{{ interest.message }}"
+              </div>
+            }
+            <div class="interest-card__meta">
+              <span class="interest-card__date">
+                <i class="bi bi-calendar me-1"></i>
+                Submitted {{ formatRelativeTime(interest.created_at) }}
+              </span>
+            </div>
+            @if (interest.status === 'approved') {
+              <div class="interest-card__action">
+                <a [routerLink]="['/projects', interest.project?.id]" class="btn btn-sm btn-success">
+                  <i class="bi bi-arrow-right me-1"></i> Go to Project
+                </a>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

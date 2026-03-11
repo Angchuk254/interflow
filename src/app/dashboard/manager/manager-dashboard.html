@@ -1,0 +1,220 @@
+<div class="manager-dashboard">
+  @if (loading()) {
+    <div class="loading"><div class="spinner"></div><span>Loading manager dashboard...</span></div>
+  } @else {
+    <!-- Header -->
+    <div class="dashboard-header">
+      <div>
+        <h1 class="dashboard-title">Manager Dashboard</h1>
+        <p class="dashboard-subtitle">Manage your projects and team</p>
+      </div>
+      <div class="dashboard-actions">
+        <a routerLink="/tasks" class="btn btn-outline-primary me-2">
+          <i class="bi bi-list-task me-1"></i> All Tasks
+        </a>
+        <a routerLink="/projects/new" class="btn btn-primary">
+          <i class="bi bi-plus-lg me-1"></i> Create Project
+        </a>
+      </div>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="stats-grid">
+      <a routerLink="/projects" class="stat-card stat-card--projects">
+        <div class="stat-card__icon"><i class="bi bi-folder-fill"></i></div>
+        <div class="stat-card__data">
+          <span class="stat-card__value">{{ stats().myProjects }}</span>
+          <span class="stat-card__label">My Projects</span>
+          <span class="stat-card__sub">{{ stats().activeProjects }} active</span>
+        </div>
+        <i class="bi bi-chevron-right stat-card__arrow"></i>
+      </a>
+      <a routerLink="/interests" class="stat-card stat-card--interests">
+        <div class="stat-card__icon"><i class="bi bi-hand-index-fill"></i></div>
+        <div class="stat-card__data">
+          <span class="stat-card__value">{{ stats().pendingInterests }}</span>
+          <span class="stat-card__label">Interest Requests</span>
+          <span class="stat-card__sub">awaiting review</span>
+        </div>
+        <i class="bi bi-chevron-right stat-card__arrow"></i>
+      </a>
+      <a routerLink="/tasks" class="stat-card stat-card--reviews">
+        <div class="stat-card__icon"><i class="bi bi-clipboard-check"></i></div>
+        <div class="stat-card__data">
+          <span class="stat-card__value">{{ stats().pendingReviews }}</span>
+          <span class="stat-card__label">Pending Reviews</span>
+          <span class="stat-card__sub">tasks to review</span>
+        </div>
+        <i class="bi bi-chevron-right stat-card__arrow"></i>
+      </a>
+      <div class="stat-card stat-card--overdue">
+        <div class="stat-card__icon"><i class="bi bi-exclamation-triangle-fill"></i></div>
+        <div class="stat-card__data">
+          <span class="stat-card__value">{{ stats().overdueTasks }}</span>
+          <span class="stat-card__label">Overdue Tasks</span>
+          <span class="stat-card__sub text-danger">need attention</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="dashboard-grid">
+      <!-- My Projects -->
+      <div class="dashboard-card">
+        <div class="card-header">
+          <h3><i class="bi bi-folder me-2"></i>My Projects</h3>
+          <a routerLink="/projects" class="card-link">View All</a>
+        </div>
+        <div class="card-body">
+          @if (myProjects().length === 0) {
+            <div class="empty-state">
+              <i class="bi bi-folder-x"></i>
+              <span>No projects assigned yet</span>
+            </div>
+          } @else {
+            @for (project of myProjects().slice(0, 5); track project.id) {
+              <a [routerLink]="['/projects', project.id]" class="project-row">
+                <div class="project-row__info">
+                  <strong>{{ project.title }}</strong>
+                  <span>{{ project.brief }}</span>
+                </div>
+                <div class="project-row__meta">
+                  <span class="badge bg-{{ getStatusClass(project.status) }}">{{ project.status.replace('_', ' ') }}</span>
+                  <span class="badge bg-{{ getPriorityClass(project.priority) }}">{{ project.priority }}</span>
+                </div>
+              </a>
+            }
+          }
+        </div>
+      </div>
+
+      <!-- Pending Interest Requests -->
+      <div class="dashboard-card">
+        <div class="card-header">
+          <h3><i class="bi bi-hand-index me-2"></i>Interest Requests</h3>
+          <a routerLink="/interests" class="card-link">View All</a>
+        </div>
+        <div class="card-body">
+          @if (pendingInterests().length === 0) {
+            <div class="empty-state">
+              <i class="bi bi-inbox"></i>
+              <span>No pending requests</span>
+            </div>
+          } @else {
+            @for (interest of pendingInterests().slice(0, 5); track interest.id) {
+              <div class="interest-row">
+                <div class="interest-row__user">
+                  <span class="avatar-sm">{{ getInitials(interest.user?.full_name || '') }}</span>
+                  <div class="interest-row__info">
+                    <strong>{{ interest.user?.full_name }}</strong>
+                    <span>{{ interest.project?.title }}</span>
+                  </div>
+                </div>
+                <div class="interest-row__actions">
+                  <button class="btn btn-sm btn-success" (click)="approveInterest(interest.id)" title="Approve">
+                    <i class="bi bi-check-lg"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger" (click)="rejectInterest(interest.id)" title="Reject">
+                    <i class="bi bi-x-lg"></i>
+                  </button>
+                </div>
+              </div>
+            }
+          }
+        </div>
+      </div>
+
+      <!-- Tasks Pending Review -->
+      <div class="dashboard-card dashboard-card--highlight">
+        <div class="card-header">
+          <h3><i class="bi bi-clipboard-check me-2"></i>Tasks Pending Review</h3>
+        </div>
+        <div class="card-body">
+          @if (tasksToReview().length === 0) {
+            <div class="empty-state empty-state--success">
+              <i class="bi bi-check-circle"></i>
+              <span>All tasks reviewed!</span>
+            </div>
+          } @else {
+            @for (task of tasksToReview().slice(0, 5); track task.id) {
+              <div class="review-row">
+                <div class="review-row__info">
+                  <strong>{{ task.title }}</strong>
+                  <span>{{ task.project?.title }}</span>
+                  @if (task.assignees && task.assignees.length > 0) {
+                    <span class="review-row__assignee">
+                      <i class="bi bi-person"></i> {{ task.assignees[0].full_name }}
+                    </span>
+                  }
+                </div>
+                <div class="review-row__actions">
+                  <button class="btn btn-sm btn-success" (click)="acceptTask(task.id)" title="Accept">
+                    <i class="bi bi-check-lg me-1"></i> Accept
+                  </button>
+                  <button class="btn btn-sm btn-outline-warning" (click)="requestChanges(task.id)" title="Request Changes">
+                    <i class="bi bi-arrow-repeat me-1"></i> Changes
+                  </button>
+                </div>
+              </div>
+            }
+          }
+        </div>
+      </div>
+
+      <!-- Overdue Tasks -->
+      <div class="dashboard-card dashboard-card--warning">
+        <div class="card-header">
+          <h3><i class="bi bi-exclamation-triangle me-2"></i>Overdue Tasks</h3>
+        </div>
+        <div class="card-body">
+          @if (overdueTasks().length === 0) {
+            <div class="empty-state empty-state--success">
+              <i class="bi bi-check-circle"></i>
+              <span>No overdue tasks!</span>
+            </div>
+          } @else {
+            @for (task of overdueTasks().slice(0, 5); track task.id) {
+              <div class="task-row task-row--overdue">
+                <div class="task-row__info">
+                  <strong>{{ task.title }}</strong>
+                  <span>{{ task.project?.title }}</span>
+                </div>
+                <span class="task-row__due">
+                  <i class="bi bi-calendar-x"></i> {{ formatDate(task.expected_end_date!) }}
+                </span>
+              </div>
+            }
+          }
+        </div>
+      </div>
+
+      <!-- Team Members -->
+      <div class="dashboard-card dashboard-card--full">
+        <div class="card-header">
+          <h3><i class="bi bi-people me-2"></i>Team Members</h3>
+          <span class="badge bg-primary">{{ teamMembers().length }} contributors</span>
+        </div>
+        <div class="card-body">
+          @if (teamMembers().length === 0) {
+            <div class="empty-state">
+              <i class="bi bi-people"></i>
+              <span>No team members yet. Approve interest requests to add contributors.</span>
+            </div>
+          } @else {
+            <div class="team-grid">
+              @for (member of teamMembers(); track member.id) {
+                <div class="team-member">
+                  <span class="avatar-md">{{ getInitials(member.full_name) }}</span>
+                  <div class="team-member__info">
+                    <strong>{{ member.full_name }}</strong>
+                    <span>{{ member.department || 'No department' }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>

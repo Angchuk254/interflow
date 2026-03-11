@@ -1,0 +1,82 @@
+<div class="page">
+  <div class="page__header">
+    <div>
+      <h1 class="page__title">Team</h1>
+      <p class="page__subtitle">Manage team members and roles</p>
+    </div>
+    @if (api.isAdmin()) {
+      <button class="btn btn-primary">
+        <i class="bi bi-person-plus me-2"></i> Invite User
+      </button>
+    }
+  </div>
+
+  <!-- Filters -->
+  <div class="filters">
+    <div class="filters__search">
+      <i class="bi bi-search"></i>
+      <input
+        type="text"
+        class="form-control"
+        placeholder="Search by name or email..."
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+      />
+    </div>
+    <select class="form-select filters__select" [ngModel]="selectedRole()" (ngModelChange)="selectedRole.set($event)">
+      <option value="all">All Roles</option>
+      <option value="admin">Admin</option>
+      <option value="manager">Manager</option>
+      <option value="user">User</option>
+    </select>
+  </div>
+
+  @if (loading()) {
+    <div class="loading">
+      <div class="spinner"></div>
+      <span>Loading team...</span>
+    </div>
+  } @else if (filteredUsers().length === 0) {
+    <div class="empty-state">
+      <i class="bi bi-people"></i>
+      <h3>No team members found</h3>
+      <p>Try adjusting your search or filters</p>
+    </div>
+  } @else {
+    <div class="team-grid">
+      @for (user of filteredUsers(); track user.id) {
+        <div class="member-card">
+          <div class="member-card__avatar">
+            {{ user.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() }}
+          </div>
+          <div class="member-card__info">
+            <h4 class="member-card__name">{{ user.full_name }}</h4>
+            <p class="member-card__email">{{ user.email }}</p>
+            @if (user.department) {
+              <p class="member-card__dept">
+                <i class="bi bi-building me-1"></i> {{ user.department }}
+              </p>
+            }
+          </div>
+          <div class="member-card__badges">
+            <span class="badge bg-{{ getRoleBadgeClass(user.role) }}">{{ user.role }}</span>
+            <span class="badge bg-{{ getStatusBadgeClass(user.status) }}">{{ user.status }}</span>
+          </div>
+          @if (api.isAdmin() && user.id !== api.user()?.id) {
+            <div class="member-card__actions">
+              <select
+                class="form-select form-select-sm"
+                [value]="user.role"
+                (change)="changeRole(user, $any($event.target).value)"
+              >
+                <option value="admin">Admin</option>
+                <option value="manager">Manager</option>
+                <option value="user">User</option>
+              </select>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

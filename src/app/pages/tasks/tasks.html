@@ -1,0 +1,102 @@
+<div class="page">
+  <div class="page__header">
+    <div>
+      <h1 class="page__title">Tasks</h1>
+      <p class="page__subtitle">Manage and track your tasks</p>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters">
+    <div class="btn-group">
+      <button
+        class="btn"
+        [class.btn-primary]="viewMode() === 'my'"
+        [class.btn-outline-primary]="viewMode() !== 'my'"
+        (click)="toggleView('my')"
+      >
+        My Tasks
+      </button>
+      @if (api.isAdmin() || api.isManager()) {
+        <button
+          class="btn"
+          [class.btn-primary]="viewMode() === 'all'"
+          [class.btn-outline-primary]="viewMode() !== 'all'"
+          (click)="toggleView('all')"
+        >
+          All Tasks
+        </button>
+      }
+    </div>
+    <div class="filters__search">
+      <i class="bi bi-search"></i>
+      <input
+        type="text"
+        class="form-control"
+        placeholder="Search tasks..."
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+      />
+    </div>
+    <select class="form-select filters__select" [ngModel]="selectedStatus()" (ngModelChange)="selectedStatus.set($event)">
+      <option value="all">All Status</option>
+      <option value="not_started">Not Started</option>
+      <option value="in_progress">In Progress</option>
+      <option value="completed">Completed</option>
+    </select>
+  </div>
+
+  @if (loading()) {
+    <div class="loading">
+      <div class="spinner"></div>
+      <span>Loading tasks...</span>
+    </div>
+  } @else if (filteredTasks().length === 0) {
+    <div class="empty-state">
+      <i class="bi bi-inbox"></i>
+      <h3>No tasks found</h3>
+      <p>You don't have any tasks assigned yet</p>
+    </div>
+  } @else {
+    <div class="task-list">
+      @for (task of filteredTasks(); track task.id) {
+        <div class="task-row" [class.task-row--completed]="task.status === 'completed'">
+          <div class="task-row__checkbox">
+            @if (task.status !== 'completed') {
+              <button class="check-btn" (click)="markComplete(task)" title="Mark Complete">
+                <i class="bi bi-circle"></i>
+              </button>
+            } @else {
+              <span class="check-done">
+                <i class="bi bi-check-circle-fill"></i>
+              </span>
+            }
+          </div>
+          <div class="task-row__content">
+            <div class="task-row__title">{{ task.title }}</div>
+            @if (task.project) {
+              <div class="task-row__project">
+                <i class="bi bi-folder me-1"></i> {{ task.project.title }}
+              </div>
+            }
+          </div>
+          <div class="task-row__meta">
+            <span class="badge bg-{{ getPriorityClass(task.priority) }} me-2">{{ task.priority }}</span>
+            <span class="badge bg-{{ getStatusClass(task.status) }}">{{ task.status.replace('_', ' ') }}</span>
+          </div>
+          <div class="task-row__due" [class.text-danger]="isOverdue(task.expected_end_date) && task.status !== 'completed'">
+            <i class="bi bi-calendar me-1"></i>
+            {{ formatDate(task.expected_end_date) }}
+          </div>
+          @if (task.assignees && task.assignees.length > 0) {
+            <div class="task-row__assignees">
+              @for (a of task.assignees.slice(0, 3); track a.id) {
+                <span class="avatar-xs" [title]="a.full_name">{{ a.full_name.charAt(0) }}</span>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

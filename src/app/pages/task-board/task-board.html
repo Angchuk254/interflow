@@ -1,0 +1,170 @@
+<div class="task-board-page">
+  @if (loading()) {
+    <div class="loading">
+      <div class="spinner"></div>
+      <span>Loading your tasks...</span>
+    </div>
+  } @else {
+    <!-- Header -->
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">
+          <i class="bi bi-kanban me-2"></i>My Task Board
+        </h1>
+        <p class="page-subtitle">Drag and drop tasks between columns to update their status</p>
+      </div>
+      <div class="page-stats">
+        <div class="stat-pill stat-pill--total">
+          <span class="stat-pill__value">{{ stats().total }}</span>
+          <span class="stat-pill__label">Total</span>
+        </div>
+        <div class="stat-pill stat-pill--todo">
+          <span class="stat-pill__value">{{ stats().notStarted }}</span>
+          <span class="stat-pill__label">To Do</span>
+        </div>
+        <div class="stat-pill stat-pill--progress">
+          <span class="stat-pill__value">{{ stats().inProgress }}</span>
+          <span class="stat-pill__label">In Progress</span>
+        </div>
+        <div class="stat-pill stat-pill--done">
+          <span class="stat-pill__value">{{ stats().completed }}</span>
+          <span class="stat-pill__label">Done</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kanban Board -->
+    <div class="kanban-board">
+      @for (column of columns; track column.id) {
+        <div 
+          class="kanban-column"
+          (dragover)="onDragOver($event)"
+          (drop)="onDrop($event, column.id)"
+        >
+          <div class="kanban-column__header" [style.border-color]="column.color">
+            <div class="column-title">
+              <i class="bi {{ column.icon }}" [style.color]="column.color"></i>
+              <span>{{ column.title }}</span>
+            </div>
+            <span class="column-count" [style.background-color]="column.color">
+              {{ getColumnTasks(column.id).length }}
+            </span>
+          </div>
+          
+          <div class="kanban-column__body">
+            @if (getColumnTasks(column.id).length === 0) {
+              <div class="empty-column">
+                <i class="bi bi-inbox"></i>
+                <span>No tasks</span>
+              </div>
+            } @else {
+              @for (task of getColumnTasks(column.id); track task.id) {
+                <div 
+                  class="task-card"
+                  [class.task-card--overdue]="isOverdue(task)"
+                  draggable="true"
+                  (dragstart)="onDragStart($event, task)"
+                >
+                  <div class="task-card__header">
+                    <span class="badge bg-{{ getPriorityClass(task.priority) }}">
+                      {{ task.priority }}
+                    </span>
+                    @if (isOverdue(task)) {
+                      <span class="badge bg-danger">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i>Overdue
+                      </span>
+                    }
+                  </div>
+                  <h4 class="task-card__title">{{ task.title }}</h4>
+                  @if (task.description) {
+                    <p class="task-card__desc">{{ task.description }}</p>
+                  }
+                  <div class="task-card__project">
+                    <i class="bi bi-folder me-1"></i>
+                    {{ task.project?.title || 'Unknown Project' }}
+                  </div>
+                  @if (task.expected_end_date) {
+                    <div class="task-card__due" [class.text-danger]="isOverdue(task)">
+                      <i class="bi bi-calendar3 me-1"></i>
+                      Due {{ formatDate(task.expected_end_date) }}
+                    </div>
+                  }
+                  <div class="task-card__actions">
+                    @if (column.id === 'not_started') {
+                      <button class="btn btn-sm btn-primary" (click)="changeStatus(task, 'in_progress')">
+                        <i class="bi bi-play-fill me-1"></i>Start
+                      </button>
+                    }
+                    @if (column.id === 'in_progress') {
+                      <button class="btn btn-sm btn-success" (click)="changeStatus(task, 'completed')">
+                        <i class="bi bi-check2 me-1"></i>Complete
+                      </button>
+                      <button class="btn btn-sm btn-outline-secondary" (click)="openTimeLogModal(task)" title="Log Time">
+                        <i class="bi bi-clock"></i>
+                      </button>
+                    }
+                    @if (column.id === 'completed') {
+                      <button class="btn btn-sm btn-outline-secondary" (click)="changeStatus(task, 'in_progress')">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i>Reopen
+                      </button>
+                    }
+                    <a [routerLink]="['/projects', task.project_id]" class="btn btn-sm btn-outline-primary" title="View Project">
+                      <i class="bi bi-box-arrow-up-right"></i>
+                    </a>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- Time Log Modal -->
+@if (showTimeLogModal && selectedTaskForTimeLog) {
+  <div class="modal-backdrop" (click)="closeTimeLogModal()"></div>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-clock me-2"></i>Log Time
+        </h5>
+        <button type="button" class="btn-close" (click)="closeTimeLogModal()"></button>
+      </div>
+      <div class="modal-body">
+        <p class="task-context">
+          <strong>Task:</strong> {{ selectedTaskForTimeLog.title }}
+        </p>
+        <div class="form-group mb-3">
+          <label class="form-label">Hours</label>
+          <input 
+            type="number" 
+            class="form-control" 
+            [(ngModel)]="timeLogForm.hours"
+            min="0.25"
+            step="0.25"
+            name="hours"
+          />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description (optional)</label>
+          <textarea 
+            class="form-control" 
+            [(ngModel)]="timeLogForm.description"
+            rows="3"
+            placeholder="What did you work on?"
+            name="description"
+          ></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeTimeLogModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" (click)="submitTimeLog()" [disabled]="timeLogForm.hours <= 0">
+          <i class="bi bi-check2 me-1"></i>Log Time
+        </button>
+      </div>
+    </div>
+  </div>
+}

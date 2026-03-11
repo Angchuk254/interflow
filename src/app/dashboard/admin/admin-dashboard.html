@@ -1,0 +1,214 @@
+<div class="admin-dashboard">
+  @if (loading()) {
+    <div class="loading"><div class="spinner"></div><span>Loading admin dashboard...</span></div>
+  } @else {
+    <!-- Header -->
+    <div class="dashboard-header">
+      <div>
+        <h1 class="dashboard-title">Admin Dashboard</h1>
+        <p class="dashboard-subtitle">Complete platform overview and management</p>
+      </div>
+      <div class="dashboard-actions">
+        <a routerLink="/team" class="btn btn-outline-primary me-2">
+          <i class="bi bi-people me-1"></i> Manage Users
+        </a>
+        <a routerLink="/projects/new" class="btn btn-primary">
+          <i class="bi bi-plus-lg me-1"></i> Create Project
+        </a>
+      </div>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="stats-grid">
+      <div class="stat-card stat-card--users">
+        <div class="stat-card__icon"><i class="bi bi-people-fill"></i></div>
+        <div class="stat-card__data">
+          <span class="stat-card__value">{{ stats().totalUsers }}</span>
+          <span class="stat-card__label">Total Users</span>
+          <span class="stat-card__sub">{{ stats().activeUsers }} active</span>
+        </div>
+      </div>
+      <div class="stat-card stat-card--projects">
+        <div class="stat-card__icon"><i class="bi bi-folder-fill"></i></div>
+        <div class="stat-card__data">
+          <span class="stat-card__value">{{ stats().totalProjects }}</span>
+          <span class="stat-card__label">Total Projects</span>
+          <span class="stat-card__sub">{{ stats().activeProjects }} in progress</span>
+        </div>
+      </div>
+      <div class="stat-card stat-card--tasks">
+        <div class="stat-card__icon"><i class="bi bi-list-task"></i></div>
+        <div class="stat-card__data">
+          <span class="stat-card__value">{{ stats().totalTasks }}</span>
+          <span class="stat-card__label">Total Tasks</span>
+          <span class="stat-card__sub text-danger">{{ stats().overdueTasks }} overdue</span>
+        </div>
+      </div>
+      <div class="stat-card stat-card--interests">
+        <div class="stat-card__icon"><i class="bi bi-hand-index-fill"></i></div>
+        <div class="stat-card__data">
+          <span class="stat-card__value">{{ stats().pendingInterests }}</span>
+          <span class="stat-card__label">Pending Interests</span>
+          <span class="stat-card__sub">awaiting review</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="charts-section">
+      <div class="chart-card">
+        <h3 class="chart-card__title">
+          <i class="bi bi-pie-chart me-2"></i>Project Status
+        </h3>
+        <div class="chart-card__body">
+          <canvas #projectStatusChart></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3 class="chart-card__title">
+          <i class="bi bi-bar-chart me-2"></i>Weekly Activity
+        </h3>
+        <div class="chart-card__body">
+          <canvas #activityChart></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="dashboard-grid">
+      <!-- Pending Interest Requests -->
+      <div class="dashboard-card">
+        <div class="card-header">
+          <h3><i class="bi bi-hand-index me-2"></i>Pending Interest Requests</h3>
+          <a routerLink="/interests" class="card-link">View All</a>
+        </div>
+        <div class="card-body">
+          @if (pendingInterests().length === 0) {
+            <div class="empty-state">
+              <i class="bi bi-inbox"></i>
+              <span>No pending requests</span>
+            </div>
+          } @else {
+            @for (interest of pendingInterests(); track interest.id) {
+              <div class="interest-row">
+                <div class="interest-row__user">
+                  <span class="avatar-sm">{{ getInitials(interest.user?.full_name || '') }}</span>
+                  <div class="interest-row__info">
+                    <strong>{{ interest.user?.full_name }}</strong>
+                    <span>{{ interest.project?.title }}</span>
+                  </div>
+                </div>
+                <div class="interest-row__actions">
+                  <button class="btn btn-sm btn-success" (click)="approveInterest(interest.id)">
+                    <i class="bi bi-check-lg"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger" (click)="rejectInterest(interest.id)">
+                    <i class="bi bi-x-lg"></i>
+                  </button>
+                </div>
+              </div>
+            }
+          }
+        </div>
+      </div>
+
+      <!-- Recent Projects -->
+      <div class="dashboard-card">
+        <div class="card-header">
+          <h3><i class="bi bi-folder me-2"></i>Recent Projects</h3>
+          <a routerLink="/projects" class="card-link">View All</a>
+        </div>
+        <div class="card-body">
+          @for (project of recentProjects(); track project.id) {
+            <a [routerLink]="['/projects', project.id]" class="project-row">
+              <div class="project-row__info">
+                <strong>{{ project.title }}</strong>
+                <span>{{ project.brief }}</span>
+              </div>
+              <span class="badge bg-{{ getStatusClass(project.status) }}">{{ project.status.replace('_', ' ') }}</span>
+            </a>
+          }
+        </div>
+      </div>
+
+      <!-- Overdue Tasks -->
+      <div class="dashboard-card dashboard-card--warning">
+        <div class="card-header">
+          <h3><i class="bi bi-exclamation-triangle me-2"></i>Overdue Tasks</h3>
+          <a routerLink="/tasks" class="card-link">View All</a>
+        </div>
+        <div class="card-body">
+          @if (overdueTasks().length === 0) {
+            <div class="empty-state empty-state--success">
+              <i class="bi bi-check-circle"></i>
+              <span>No overdue tasks!</span>
+            </div>
+          } @else {
+            @for (task of overdueTasks(); track task.id) {
+              <div class="task-row task-row--overdue">
+                <div class="task-row__info">
+                  <strong>{{ task.title }}</strong>
+                  <span>{{ task.project?.title }}</span>
+                </div>
+                <span class="task-row__due">
+                  <i class="bi bi-calendar-x"></i> {{ formatDate(task.expected_end_date!) }}
+                </span>
+              </div>
+            }
+          }
+        </div>
+      </div>
+
+      <!-- Team Members -->
+      <div class="dashboard-card">
+        <div class="card-header">
+          <h3><i class="bi bi-people me-2"></i>Team Members</h3>
+          <a routerLink="/team" class="card-link">Manage</a>
+        </div>
+        <div class="card-body">
+          @for (user of recentUsers(); track user.id) {
+            <div class="user-row">
+              <span class="avatar-sm">{{ getInitials(user.full_name) }}</span>
+              <div class="user-row__info">
+                <strong>{{ user.full_name }}</strong>
+                <span>{{ user.email }}</span>
+              </div>
+              <span class="badge bg-{{ getRoleClass(user.role) }}">{{ user.role }}</span>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Recent Activity -->
+      <div class="dashboard-card dashboard-card--full">
+        <div class="card-header">
+          <h3><i class="bi bi-activity me-2"></i>Recent Activity</h3>
+          <a routerLink="/activity" class="card-link">View All</a>
+        </div>
+        <div class="card-body">
+          @if (recentActivity().length === 0) {
+            <div class="empty-state">
+              <i class="bi bi-activity"></i>
+              <span>No recent activity</span>
+            </div>
+          } @else {
+            <div class="activity-timeline">
+              @for (act of recentActivity(); track act.id) {
+                <div class="activity-item">
+                  <div class="activity-item__dot"></div>
+                  <div class="activity-item__content">
+                    <span class="activity-item__text">
+                      <strong>{{ act.actor?.full_name || 'System' }}</strong>
+                      {{ act.action }} {{ act.entity_type }}
+                    </span>
+                    <span class="activity-item__time">{{ formatRelativeTime(act.created_at) }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>

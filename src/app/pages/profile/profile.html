@@ -1,0 +1,81 @@
+<div class="page">
+  <div class="page__header">
+    <h1 class="page__title">My Profile</h1>
+    <p class="page__subtitle">Manage your personal information</p>
+  </div>
+
+  @if (message(); as msg) {
+    <div class="alert" [class.alert-success]="msg.type === 'success'" [class.alert-danger]="msg.type === 'error'">
+      {{ msg.text }}
+    </div>
+  }
+
+  <div class="profile-card">
+    <div class="profile-card__header">
+      <div class="profile-card__avatar">
+        {{ getInitials() }}
+      </div>
+      <div class="profile-card__info">
+        <h2>{{ form.full_name || 'Your Name' }}</h2>
+        <span>{{ api.user()?.email }}</span>
+        <span class="badge bg-primary mt-2">{{ api.userRole() | titlecase }}</span>
+      </div>
+    </div>
+
+    <form (ngSubmit)="saveProfile()">
+      <div class="mb-3">
+        <label class="form-label">Full Name</label>
+        <input
+          type="text"
+          class="form-control"
+          [(ngModel)]="form.full_name"
+          name="full_name"
+          placeholder="Enter your full name"
+          required
+        />
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input
+          type="email"
+          class="form-control"
+          [value]="api.user()?.email"
+          disabled
+        />
+        <small class="text-muted">Email cannot be changed</small>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Department</label>
+        <input
+          type="text"
+          class="form-control"
+          [(ngModel)]="form.department"
+          name="department"
+          placeholder="Enter your department"
+        />
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Role</label>
+        <input
+          type="text"
+          class="form-control"
+          [value]="api.userRole() | titlecase"
+          disabled
+        />
+        <small class="text-muted">Contact an admin to change your role</small>
+      </div>
+
+      <div class="profile-card__actions">
+        <button type="submit" class="btn btn-primary" [disabled]="saving()">
+          @if (saving()) {
+            <span class="spinner-border spinner-border-sm me-2"></span>
+          }
+          Save Changes
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

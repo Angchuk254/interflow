@@ -1,0 +1,337 @@
+<div class="page">
+  @if (loading()) {
+    <div class="loading">
+      <div class="spinner"></div>
+      <span>Loading...</span>
+    </div>
+  } @else {
+    <div class="page__header">
+      <a routerLink="/projects" class="back-link">
+        <i class="bi bi-arrow-left"></i> Back to Projects
+      </a>
+      <h1 class="page__title">
+        @if (isEditMode()) { Edit Project } @else { Create New Project }
+      </h1>
+      <p class="page__subtitle">
+        @if (isEditMode()) {
+          Update project details and settings
+        } @else {
+          Set up a new project for your team
+        }
+      </p>
+    </div>
+
+    @if (error()) {
+      <div class="alert alert-danger">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        {{ error() }}
+      </div>
+    }
+
+    <form (ngSubmit)="submit()" class="project-form">
+      <div class="form-section">
+        <h3 class="form-section__title">
+          <i class="bi bi-info-circle me-2"></i>Basic Information
+        </h3>
+        
+        <div class="mb-3">
+          <label class="form-label">Project Title <span class="text-danger">*</span></label>
+          <input
+            type="text"
+            class="form-control form-control-lg"
+            [(ngModel)]="form.title"
+            name="title"
+            placeholder="Enter project title"
+            required
+          />
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Brief <span class="text-danger">*</span></label>
+          <input
+            type="text"
+            class="form-control"
+            [(ngModel)]="form.brief"
+            name="brief"
+            placeholder="Short one-line description"
+            required
+          />
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Description</label>
+          <textarea
+            class="form-control"
+            [(ngModel)]="form.description"
+            name="description"
+            rows="4"
+            placeholder="Detailed project description (optional)"
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h3 class="form-section__title">
+          <i class="bi bi-calendar3 me-2"></i>Timeline
+        </h3>
+        
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Start Date <span class="text-danger">*</span></label>
+            <input
+              type="date"
+              class="form-control"
+              [(ngModel)]="form.start_date"
+              name="start_date"
+              required
+            />
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Expected End Date <span class="text-danger">*</span></label>
+            <input
+              type="date"
+              class="form-control"
+              [(ngModel)]="form.expected_end_date"
+              name="expected_end_date"
+              required
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h3 class="form-section__title">
+          <i class="bi bi-gear me-2"></i>Settings
+        </h3>
+        
+        <div class="row">
+          @if (isEditMode()) {
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Status</label>
+              <select class="form-select" [(ngModel)]="form.status" name="status">
+                <option value="not_started">Not Started</option>
+                <option value="in_progress">In Progress</option>
+                <option value="completed">Completed</option>
+                <option value="delayed">Delayed</option>
+                <option value="on_hold">On Hold</option>
+              </select>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Priority</label>
+              <select class="form-select" [(ngModel)]="form.priority" name="priority">
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+              </select>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Visibility</label>
+              <select class="form-select" [(ngModel)]="form.visibility" name="visibility">
+                <option value="company_wide">Company Wide</option>
+                <option value="restricted">Restricted</option>
+              </select>
+            </div>
+          } @else {
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Priority</label>
+              <select class="form-select" [(ngModel)]="form.priority" name="priority">
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Visibility</label>
+              <select class="form-select" [(ngModel)]="form.visibility" name="visibility">
+                <option value="company_wide">Company Wide</option>
+                <option value="restricted">Restricted</option>
+              </select>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h3 class="form-section__title">
+          <i class="bi bi-tags me-2"></i>Tags
+        </h3>
+        <p class="form-section__hint">Select relevant tags for this project</p>
+        <div class="tags-selector">
+          @for (tag of tags(); track tag.id) {
+            <button
+              type="button"
+              class="tag-btn"
+              [class.tag-btn--selected]="isTagSelected(tag.id)"
+              [style.--tag-color]="tag.color || '#e2e8f0'"
+              (click)="toggleTag(tag.id)"
+            >
+              @if (isTagSelected(tag.id)) {
+                <i class="bi bi-check2 me-1"></i>
+              }
+              {{ tag.name }}
+            </button>
+          }
+          @if (tags().length === 0) {
+            <span class="text-muted">No tags available</span>
+          }
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h3 class="form-section__title">
+          <i class="bi bi-people me-2"></i>Project Managers
+        </h3>
+        <p class="form-section__hint">Assign managers to oversee this project</p>
+        <div class="managers-grid">
+          @for (manager of managers(); track manager.id) {
+            <button
+              type="button"
+              class="manager-card"
+              [class.manager-card--selected]="isManagerSelected(manager.id)"
+              (click)="toggleManager(manager.id)"
+            >
+              <span class="avatar">{{ getInitials(manager.full_name) }}</span>
+              <div class="manager-card__info">
+                <strong>{{ manager.full_name }}</strong>
+                <span>{{ manager.role | titlecase }}</span>
+              </div>
+              @if (isManagerSelected(manager.id)) {
+                <i class="bi bi-check-circle-fill"></i>
+              }
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h3 class="form-section__title">
+          <i class="bi bi-person-plus me-2"></i>Invite Team Members
+        </h3>
+        <p class="form-section__hint">Directly invite employees to work on this project (skip interest approval)</p>
+        @if (employees().length === 0) {
+          <div class="empty-box">
+            <i class="bi bi-people"></i>
+            <span>No employees available</span>
+          </div>
+        } @else {
+          <div class="employee-search">
+            <i class="bi bi-search"></i>
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Search employees by name, email or department..."
+              [ngModel]="employeeSearch()"
+              (ngModelChange)="employeeSearch.set($event)"
+              name="employeeSearch"
+            />
+            @if (employeeSearch()) {
+              <button type="button" class="clear-btn" (click)="employeeSearch.set('')">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            }
+          </div>
+          @if (filteredEmployees().length === 0) {
+            <div class="empty-box empty-box--sm">
+              <i class="bi bi-search"></i>
+              <span>No employees found matching "{{ employeeSearch() }}"</span>
+            </div>
+          } @else {
+            <div class="employees-grid">
+              @for (employee of filteredEmployees(); track employee.id) {
+                <button
+                  type="button"
+                  class="employee-card"
+                  [class.employee-card--selected]="isEmployeeInvited(employee.id)"
+                  (click)="toggleEmployee(employee.id)"
+                >
+                <span class="avatar avatar--employee">{{ getInitials(employee.full_name) }}</span>
+                <div class="employee-card__info">
+                  <strong>{{ employee.full_name }}</strong>
+                  <span>{{ employee.department || employee.email }}</span>
+                </div>
+                @if (isEmployeeInvited(employee.id)) {
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                }
+              </button>
+            }
+            </div>
+          }
+          @if (form.invitedEmployees.length > 0) {
+            <div class="invited-count">
+              <i class="bi bi-check-circle me-1"></i>
+              {{ form.invitedEmployees.length }} employee(s) will be invited
+            </div>
+          }
+        }
+      </div>
+
+      <div class="form-section">
+        <h3 class="form-section__title">
+          <i class="bi bi-link-45deg me-2"></i>References & Resources
+        </h3>
+        <p class="form-section__hint">Add links to Figma designs, documents, GitHub repos, etc.</p>
+        
+        <div class="reference-form">
+          <div class="reference-form__row">
+            <select class="form-select" [(ngModel)]="newReference.type" name="refType" style="width: 140px;">
+              <option value="figma">Figma</option>
+              <option value="document">Document</option>
+              <option value="github">GitHub</option>
+              <option value="other">Other</option>
+            </select>
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="newReference.title"
+              name="refTitle"
+              placeholder="Title (e.g., Main Design)"
+            />
+            <input
+              type="url"
+              class="form-control"
+              [(ngModel)]="newReference.url"
+              name="refUrl"
+              placeholder="https://..."
+            />
+            <button type="button" class="btn btn-outline-primary" (click)="addReference()">
+              <i class="bi bi-plus-lg"></i>
+            </button>
+          </div>
+        </div>
+
+        @if (references.length > 0) {
+          <div class="reference-list">
+            @for (ref of references; track $index) {
+              <div class="reference-item">
+                <i class="bi {{ getReferenceIcon(ref.type) }} reference-item__icon"></i>
+                <div class="reference-item__info">
+                  <strong>{{ ref.title }}</strong>
+                  <a [href]="ref.url" target="_blank" class="reference-item__url">{{ ref.url }}</a>
+                </div>
+                <button type="button" class="btn-remove" (click)="removeReference($index)">
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-outline-secondary" routerLink="/projects">
+          Cancel
+        </button>
+        <button type="submit" class="btn btn-primary" [disabled]="saving()">
+          @if (saving()) {
+            <span class="spinner-border spinner-border-sm me-2"></span>
+          }
+          @if (isEditMode()) {
+            <i class="bi bi-check-lg me-2"></i> Save Changes
+          } @else {
+            <i class="bi bi-rocket me-2"></i> Create Project
+          }
+        </button>
+      </div>
+    </form>
+  }
+</div>

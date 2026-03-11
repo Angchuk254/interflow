@@ -1,0 +1,272 @@
+<div class="page">
+  <div class="page__header">
+    <div>
+      <h1 class="page__title">My Work</h1>
+      <p class="page__subtitle">Your assigned tasks and project contributions</p>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-row">
+    <button class="stat-card" [class.active]="selectedFilter() === 'all'" (click)="setFilter('all')">
+      <span class="stat-card__value">{{ stats.total }}</span>
+      <span class="stat-card__label">Total Tasks</span>
+    </button>
+    <button class="stat-card stat-card--primary" [class.active]="selectedFilter() === 'in_progress'" (click)="setFilter('in_progress')">
+      <span class="stat-card__value">{{ stats.inProgress }}</span>
+      <span class="stat-card__label">In Progress</span>
+    </button>
+    <button class="stat-card stat-card--danger" [class.active]="selectedFilter() === 'overdue'" (click)="setFilter('overdue')">
+      <span class="stat-card__value">{{ stats.overdue }}</span>
+      <span class="stat-card__label">Overdue</span>
+    </button>
+    <button class="stat-card stat-card--success" [class.active]="selectedFilter() === 'completed'" (click)="setFilter('completed')">
+      <span class="stat-card__value">{{ stats.completed }}</span>
+      <span class="stat-card__label">Completed</span>
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="loading">
+      <div class="spinner"></div>
+      <span>Loading your work...</span>
+    </div>
+  } @else {
+    <div class="content-grid">
+      <!-- Tasks Section -->
+      <div class="section tasks-section">
+        <div class="section__header">
+          <h2 class="section__title">
+            <i class="bi bi-check2-square me-2"></i> My Tasks
+            <span class="badge bg-secondary ms-2">{{ filteredTasks.length }}</span>
+          </h2>
+        </div>
+
+        @if (filteredTasks.length === 0) {
+          <div class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <p>No tasks found</p>
+          </div>
+        } @else {
+          <div class="task-list">
+            @for (task of filteredTasks; track task.id) {
+              <div class="task-card" [class.overdue]="isOverdue(task)" [class.expanded]="isExpanded(task.id)">
+                <div class="task-card__main" (click)="toggleTaskExpand(task)">
+                  <div class="task-card__header">
+                    <span class="badge bg-{{ getPriorityClass(task.priority) }} me-2">{{ task.priority }}</span>
+                    <span class="badge bg-{{ getStatusClass(task.status) }}">{{ task.status.replace('_', ' ') }}</span>
+                    <button class="expand-btn">
+                      <i class="bi" [class.bi-chevron-down]="!isExpanded(task.id)" [class.bi-chevron-up]="isExpanded(task.id)"></i>
+                    </button>
+                  </div>
+                  <h4 class="task-card__title">{{ task.title }}</h4>
+                  @if (task.description && !isExpanded(task.id)) {
+                    <p class="task-card__desc">{{ task.description }}</p>
+                  }
+                  <div class="task-card__meta">
+                    @if (task.expected_end_date) {
+                      <span [class.text-danger]="isOverdue(task)">
+                        <i class="bi bi-calendar3 me-1"></i>
+                        {{ getDaysRemaining(task.expected_end_date) }}
+                      </span>
+                    }
+                    @if (task.project?.title) {
+                      <span class="project-name">
+                        <i class="bi bi-folder me-1"></i>{{ task.project!.title }}
+                      </span>
+                    }
+                    @if (task.review_status === 'pending_review') {
+                      <span class="badge bg-info">Awaiting Review</span>
+                    }
+                    @if (task.review_status === 'changes_requested') {
+                      <span class="badge bg-warning">Changes Requested</span>
+                    }
+                    @if (task.status === 'not_started') {
+                      <button class="btn btn-sm btn-primary ms-auto" (click)="startTask(task); $event.stopPropagation()">
+                        <i class="bi bi-play-fill me-1"></i> Start
+                      </button>
+                    }
+                  </div>
+                </div>
+
+                <!-- Expanded Details -->
+                @if (isExpanded(task.id)) {
+                  <div class="task-card__expanded">
+                    <!-- Full Description -->
+                    @if (task.description) {
+                      <div class="detail-section">
+                        <h5><i class="bi bi-text-paragraph me-2"></i>Description</h5>
+                        <p class="full-description">{{ task.description }}</p>
+                      </div>
+                    }
+
+                    <!-- Task Info -->
+                    <div class="detail-section">
+                      <h5><i class="bi bi-info-circle me-2"></i>Details</h5>
+                      <div class="info-grid">
+                        <div class="info-item">
+                          <span class="info-label">Status</span>
+                          <span class="badge bg-{{ getStatusClass(task.status) }}">{{ task.status.replace('_', ' ') }}</span>
+                        </div>
+                        <div class="info-item">
+                          <span class="info-label">Priority</span>
+                          <span class="badge bg-{{ getPriorityClass(task.priority) }}">{{ task.priority }}</span>
+                        </div>
+                        @if (task.start_date) {
+                          <div class="info-item">
+                            <span class="info-label">Start Date</span>
+                            <span>{{ formatDate(task.start_date) }}</span>
+                          </div>
+                        }
+                        @if (task.expected_end_date) {
+                          <div class="info-item">
+                            <span class="info-label">Due Date</span>
+                            <span [class.text-danger]="isOverdue(task)">{{ formatDate(task.expected_end_date) }}</span>
+                          </div>
+                        }
+                      </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="detail-section">
+                      <h5><i class="bi bi-lightning me-2"></i>Quick Actions</h5>
+                      <div class="quick-actions">
+                        @if (task.status === 'not_started') {
+                          <button class="btn btn-primary" (click)="startTask(task); $event.stopPropagation()">
+                            <i class="bi bi-play-fill me-1"></i> Start Task
+                          </button>
+                        }
+                        @if (task.status === 'in_progress') {
+                          <button class="btn btn-success" (click)="markComplete(task); $event.stopPropagation()">
+                            <i class="bi bi-check-lg me-1"></i> Mark Complete
+                          </button>
+                          <button class="btn btn-outline-warning" (click)="updateStatus(task, 'on_hold'); $event.stopPropagation()">
+                            <i class="bi bi-pause-fill me-1"></i> Pause
+                          </button>
+                          <button class="btn btn-outline-secondary" (click)="showTimeLogForm = !showTimeLogForm; $event.stopPropagation()">
+                            <i class="bi bi-clock me-1"></i> Log Time
+                          </button>
+                        }
+                        @if (task.status === 'on_hold') {
+                          <button class="btn btn-primary" (click)="updateStatus(task, 'in_progress'); $event.stopPropagation()">
+                            <i class="bi bi-play-fill me-1"></i> Resume
+                          </button>
+                        }
+                        <a [routerLink]="['/projects', task.project_id]" class="btn btn-outline-primary" (click)="$event.stopPropagation()">
+                          <i class="bi bi-box-arrow-up-right me-1"></i> View Project
+                        </a>
+                      </div>
+                    </div>
+
+                    <!-- Time Log Form -->
+                    @if (showTimeLogForm && task.status === 'in_progress') {
+                      <div class="detail-section time-log-form" (click)="$event.stopPropagation()">
+                        <h5><i class="bi bi-clock-history me-2"></i>Log Time</h5>
+                        <div class="time-log-inputs">
+                          <div class="form-group">
+                            <label class="form-label">Hours</label>
+                            <input type="number" class="form-control" [(ngModel)]="timeLogForm.hours" min="0.25" step="0.25" />
+                          </div>
+                          <div class="form-group">
+                            <label class="form-label">Description</label>
+                            <input type="text" class="form-control" [(ngModel)]="timeLogForm.description" placeholder="What did you work on?" />
+                          </div>
+                          <button class="btn btn-primary" (click)="submitTimeLog()" [disabled]="submittingTimeLog">
+                            @if (submittingTimeLog) {
+                              <span class="spinner-border spinner-border-sm me-1"></span>
+                            }
+                            Log Time
+                          </button>
+                        </div>
+                      </div>
+                    }
+
+                    <!-- Comments Section -->
+                    <div class="detail-section comments-section" (click)="$event.stopPropagation()">
+                      <h5><i class="bi bi-chat-dots me-2"></i>Comments & Updates</h5>
+                      
+                      <!-- Add Comment -->
+                      <div class="comment-form">
+                        <textarea 
+                          class="form-control" 
+                          [(ngModel)]="newComment" 
+                          rows="2" 
+                          placeholder="Add a comment or update..."
+                        ></textarea>
+                        <button class="btn btn-primary" (click)="submitComment()" [disabled]="submittingComment || !newComment.trim()">
+                          @if (submittingComment) {
+                            <span class="spinner-border spinner-border-sm me-1"></span>
+                          }
+                          <i class="bi bi-send me-1"></i> Post
+                        </button>
+                      </div>
+
+                      <!-- Comments List -->
+                      @if (loadingComments()) {
+                        <div class="loading-comments">
+                          <span class="spinner-border spinner-border-sm me-2"></span> Loading comments...
+                        </div>
+                      } @else if (taskComments().length === 0) {
+                        <p class="no-comments">No comments yet. Be the first to add one!</p>
+                      } @else {
+                        <div class="comments-list">
+                          @for (comment of taskComments(); track comment.id) {
+                            <div class="comment-item">
+                              <span class="comment-avatar">{{ getInitials(comment.user?.full_name || '?') }}</span>
+                              <div class="comment-content">
+                                <div class="comment-header">
+                                  <strong>{{ comment.user?.full_name }}</strong>
+                                  <span class="comment-time">{{ formatDate(comment.created_at) }} at {{ formatTime(comment.created_at) }}</span>
+                                </div>
+                                <p class="comment-body">{{ comment.body }}</p>
+                              </div>
+                            </div>
+                          }
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Projects Section -->
+      <div class="section projects-section">
+        <div class="section__header">
+          <h2 class="section__title">
+            <i class="bi bi-folder me-2"></i> My Projects
+            <span class="badge bg-secondary ms-2">{{ myProjects().length }}</span>
+          </h2>
+        </div>
+
+        @if (myProjects().length === 0) {
+          <div class="empty-state">
+            <i class="bi bi-folder-x"></i>
+            <p>You haven't been added to any projects yet</p>
+            <a routerLink="/projects" class="btn btn-outline-primary btn-sm mt-2">
+              <i class="bi bi-compass me-1"></i> Explore Projects
+            </a>
+          </div>
+        } @else {
+          <div class="project-list">
+            @for (project of myProjects(); track project.id) {
+              <a [routerLink]="['/projects', project.id]" class="project-card">
+                <div class="project-card__header">
+                  <span class="badge bg-{{ getStatusClass(project.status) }}">{{ project.status.replace('_', ' ') }}</span>
+                </div>
+                <h4 class="project-card__title">{{ project.title }}</h4>
+                <p class="project-card__brief">{{ project.brief }}</p>
+                <div class="project-card__meta">
+                  <span><i class="bi bi-calendar3 me-1"></i> Due {{ project.expected_end_date }}</span>
+                </div>
+              </a>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

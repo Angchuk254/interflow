@@ -1,0 +1,138 @@
+<div class="page">
+  <div class="page__header">
+    <div>
+      <h1 class="page__title">Interest Requests</h1>
+      <p class="page__subtitle">Review and manage who wants to join your projects</p>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card" [class.active]="selectedStatus() === 'pending'" (click)="selectedStatus.set('pending')">
+      <span class="stat-card__icon stat-card__icon--pending"><i class="bi bi-hourglass-split"></i></span>
+      <div class="stat-card__info">
+        <span class="stat-card__value">{{ pendingCount }}</span>
+        <span class="stat-card__label">Pending</span>
+      </div>
+    </div>
+    <div class="stat-card" [class.active]="selectedStatus() === 'approved'" (click)="selectedStatus.set('approved')">
+      <span class="stat-card__icon stat-card__icon--approved"><i class="bi bi-check-circle"></i></span>
+      <div class="stat-card__info">
+        <span class="stat-card__value">{{ approvedCount }}</span>
+        <span class="stat-card__label">Approved</span>
+      </div>
+    </div>
+    <div class="stat-card" [class.active]="selectedStatus() === 'rejected'" (click)="selectedStatus.set('rejected')">
+      <span class="stat-card__icon stat-card__icon--rejected"><i class="bi bi-x-circle"></i></span>
+      <div class="stat-card__info">
+        <span class="stat-card__value">{{ rejectedCount }}</span>
+        <span class="stat-card__label">Rejected</span>
+      </div>
+    </div>
+    <div class="stat-card" [class.active]="selectedStatus() === 'all'" (click)="selectedStatus.set('all')">
+      <span class="stat-card__icon"><i class="bi bi-list-ul"></i></span>
+      <div class="stat-card__info">
+        <span class="stat-card__value">{{ interests().length }}</span>
+        <span class="stat-card__label">All Requests</span>
+      </div>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="loading">
+      <div class="spinner"></div>
+      <span>Loading requests...</span>
+    </div>
+  } @else if (filteredInterests().length === 0) {
+    <div class="empty-state">
+      <i class="bi bi-inbox"></i>
+      <h3>No interest requests</h3>
+      <p>No {{ selectedStatus() }} requests to show</p>
+    </div>
+  } @else {
+    <div class="interest-list">
+      @for (interest of filteredInterests(); track interest.id) {
+        <div class="interest-card" [class.interest-card--pending]="interest.status === 'pending'" [class.interest-card--approved]="interest.status === 'approved'" [class.interest-card--rejected]="interest.status === 'rejected'">
+          <!-- User Info - Big and Clear -->
+          <div class="interest-card__user">
+            <span class="avatar avatar--lg">{{ getInitials(interest.user?.full_name || '') }}</span>
+            <div class="interest-card__user-info">
+              <h3 class="interest-card__user-name">{{ interest.user?.full_name }}</h3>
+              <span class="interest-card__user-email">{{ interest.user?.email }}</span>
+              @if (interest.user?.department) {
+                <span class="interest-card__user-dept">
+                  <i class="bi bi-building me-1"></i>{{ interest.user?.department }}
+                </span>
+              }
+            </div>
+            <span class="interest-card__status badge" [ngClass]="{
+              'bg-warning': interest.status === 'pending',
+              'bg-success': interest.status === 'approved',
+              'bg-danger': interest.status === 'rejected'
+            }">
+              {{ interest.status | titlecase }}
+            </span>
+          </div>
+
+          <!-- Project Info -->
+          <div class="interest-card__project">
+            <i class="bi bi-folder-fill me-2"></i>
+            <span>Interested in:</span>
+            <a [routerLink]="['/projects', interest.project?.id]" class="interest-card__project-name">
+              {{ interest.project?.title }}
+            </a>
+          </div>
+
+          <!-- Message -->
+          @if (interest.message) {
+            <div class="interest-card__message">
+              <div class="interest-card__message-label">
+                <i class="bi bi-chat-quote me-1"></i> Message:
+              </div>
+              <p>"{{ interest.message }}"</p>
+            </div>
+          }
+
+          <!-- Footer with Actions -->
+          <div class="interest-card__footer">
+            <span class="interest-card__date">
+              <i class="bi bi-clock me-1"></i>
+              Requested {{ formatDate(interest.created_at) }}
+            </span>
+
+            @if (interest.status === 'pending') {
+              <div class="interest-card__actions">
+                <button class="btn btn-success" (click)="approve(interest)">
+                  <i class="bi bi-check-lg me-1"></i> Approve
+                </button>
+                <button class="btn btn-outline-danger" (click)="reject(interest)">
+                  <i class="bi bi-x-lg me-1"></i> Reject
+                </button>
+              </div>
+            }
+
+            @if (interest.status === 'approved' && interest.reviewed_at) {
+              <span class="interest-card__reviewed">
+                <i class="bi bi-check-circle-fill text-success me-1"></i>
+                Approved {{ formatDate(interest.reviewed_at) }}
+              </span>
+            }
+
+            @if (interest.status === 'rejected' && interest.reviewed_at) {
+              <span class="interest-card__reviewed">
+                <i class="bi bi-x-circle-fill text-danger me-1"></i>
+                Rejected {{ formatDate(interest.reviewed_at) }}
+              </span>
+            }
+          </div>
+
+          @if (interest.review_note) {
+            <div class="interest-card__review-note">
+              <i class="bi bi-sticky me-1"></i> Note: {{ interest.review_note }}
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

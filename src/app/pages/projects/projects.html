@@ -1,0 +1,188 @@
+<div class="page">
+  <div class="page__header">
+    <div>
+      <h1 class="page__title">
+        @if (isUser()) { Explore Projects } @else { All Projects }
+      </h1>
+      <p class="page__subtitle">
+        @if (isUser()) {
+          Discover projects and show interest to join
+        } @else {
+          Browse and manage all projects
+        }
+      </p>
+    </div>
+    @if (canCreate()) {
+      <a routerLink="/projects/new" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-2"></i> New Project
+      </a>
+    }
+  </div>
+
+  <div class="filters">
+    <div class="filters__search">
+      <i class="bi bi-search"></i>
+      <input
+        type="text"
+        class="form-control"
+        placeholder="Search projects..."
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+      />
+    </div>
+    <select class="form-select filters__select" [ngModel]="selectedStatus()" (ngModelChange)="selectedStatus.set($event)">
+      <option value="all">All Status</option>
+      <option value="not_started">Not Started</option>
+      <option value="in_progress">In Progress</option>
+      <option value="completed">Completed</option>
+      <option value="delayed">Delayed</option>
+      <option value="on_hold">On Hold</option>
+    </select>
+    <select class="form-select filters__select" [ngModel]="selectedPriority()" (ngModelChange)="selectedPriority.set($event)">
+      <option value="all">All Priority</option>
+      <option value="high">High</option>
+      <option value="medium">Medium</option>
+      <option value="low">Low</option>
+    </select>
+  </div>
+
+  @if (loading()) {
+    <div class="loading">
+      <div class="spinner"></div>
+      <span>Loading projects...</span>
+    </div>
+  } @else if (filteredProjects().length === 0) {
+    <div class="empty-state">
+      <i class="bi bi-folder-x"></i>
+      <h3>No projects found</h3>
+      <p>Try adjusting your filters or check back later</p>
+    </div>
+  } @else {
+    <div class="project-grid">
+      @for (project of filteredProjects(); track project.id) {
+        <div class="project-card" [class.project-card--favorite]="isFavorite(project.id)">
+          <div class="project-card__header">
+            <div class="project-card__badges">
+              <span class="badge bg-{{ getStatusClass(project.status) }}">
+                {{ project.status.replace('_', ' ') }}
+              </span>
+              <span class="badge bg-{{ getPriorityClass(project.priority) }}">
+                {{ project.priority }}
+              </span>
+            </div>
+            <div class="project-card__actions">
+              @if (project.visibility === 'restricted') {
+                <i class="bi bi-lock-fill text-muted" title="Restricted"></i>
+              }
+              <button 
+                class="favorite-btn" 
+                [class.favorite-btn--active]="isFavorite(project.id)"
+                (click)="toggleFavorite(project.id, $event)"
+                [title]="isFavorite(project.id) ? 'Remove from favorites' : 'Add to favorites'"
+              >
+                <i class="bi" [class.bi-star-fill]="isFavorite(project.id)" [class.bi-star]="!isFavorite(project.id)"></i>
+              </button>
+            </div>
+          </div>
+          <h3 class="project-card__title">
+            <a [routerLink]="['/projects', project.id]">{{ project.title }}</a>
+          </h3>
+          <p class="project-card__brief">{{ project.brief }}</p>
+          <div class="project-card__meta">
+            <div class="project-card__dates">
+              <span><i class="bi bi-calendar me-1"></i> {{ formatDate(project.start_date) }}</span>
+              <span class="mx-2">-</span>
+              <span>{{ formatDate(project.expected_end_date) }}</span>
+            </div>
+          </div>
+          @if (project.tags && project.tags.length > 0) {
+            <div class="project-card__tags">
+              @for (tag of project.tags.slice(0, 3); track tag.id) {
+                <span class="tag" [style.background-color]="tag.color || '#e2e8f0'">{{ tag.name }}</span>
+              }
+              @if (project.tags.length > 3) {
+                <span class="tag tag--more">+{{ project.tags.length - 3 }}</span>
+              }
+            </div>
+          }
+          <div class="project-card__creator-section">
+            @if (project.creator) {
+              <div class="project-card__creator">
+                <span class="avatar-sm">{{ project.creator.full_name.charAt(0) }}</span>
+                <div class="project-card__creator-info">
+                  <span class="creator-label">Created by</span>
+                  <strong>{{ project.creator.full_name }}</strong>
+                  <span class="creator-role">{{ project.creator.role }}</span>
+                </div>
+              </div>
+            }
+          </div>
+          <div class="project-card__footer">
+            @if (isUser()) {
+              @if (hasSubmittedInterest(project.id)) {
+                <span class="interest-badge">
+                  <i class="bi bi-check-circle-fill me-1"></i> Interest Submitted
+                </span>
+              } @else {
+                <button class="btn btn-sm btn-primary" (click)="openInterestModal(project.id)">
+                  <i class="bi bi-heart me-1"></i> Show Interest
+                </button>
+              }
+            } @else {
+              <a [routerLink]="['/projects', project.id]" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-eye me-1"></i> View Details
+              </a>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- Interest Modal -->
+@if (showInterestModal()) {
+  <div class="modal-backdrop" (click)="closeInterestModal()"></div>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-heart-fill text-danger me-2"></i>
+          Show Interest
+        </h5>
+        <button type="button" class="btn-close" (click)="closeInterestModal()"></button>
+      </div>
+      <div class="modal-body">
+        @if (getSelectedProject(); as project) {
+          <div class="interest-project-preview">
+            <h6>{{ project.title }}</h6>
+            <p>{{ project.brief }}</p>
+          </div>
+        }
+        <div class="mb-3">
+          <label class="form-label">Why do you want to join this project? (optional)</label>
+          <textarea
+            class="form-control"
+            rows="3"
+            placeholder="Share your motivation, relevant skills, or how you can contribute..."
+            [ngModel]="interestMessage()"
+            (ngModelChange)="interestMessage.set($event)"
+          ></textarea>
+        </div>
+        <p class="text-muted small">
+          <i class="bi bi-info-circle me-1"></i>
+          A manager will review your request and you'll be notified of the decision.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" (click)="closeInterestModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" (click)="submitInterest()" [disabled]="submittingInterest()">
+          @if (submittingInterest()) {
+            <span class="spinner-border spinner-border-sm me-2"></span>
+          }
+          Submit Interest
+        </button>
+      </div>
+    </div>
+  </div>
+}

@@ -1,0 +1,123 @@
+<div class="page">
+  <div class="page__header">
+    <div>
+      <h1 class="page__title">Calendar</h1>
+      <p class="page__subtitle">View deadlines and scheduled work</p>
+    </div>
+    <div class="calendar-nav">
+      <button class="btn btn-outline-secondary" (click)="goToToday()">Today</button>
+      <button class="btn btn-outline-secondary" (click)="prevMonth()">
+        <i class="bi bi-chevron-left"></i>
+      </button>
+      <span class="calendar-nav__month">{{ currentMonth() }}</span>
+      <button class="btn btn-outline-secondary" (click)="nextMonth()">
+        <i class="bi bi-chevron-right"></i>
+      </button>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="loading">
+      <div class="spinner"></div>
+      <span>Loading calendar...</span>
+    </div>
+  } @else {
+    <div class="calendar">
+      <div class="calendar__header">
+        @for (day of weekDays; track day) {
+          <div class="calendar__weekday">{{ day }}</div>
+        }
+      </div>
+      <div class="calendar__grid">
+        @for (day of calendarDays(); track day.date.toISOString()) {
+          <div
+            class="calendar__day"
+            [class.other-month]="!day.isCurrentMonth"
+            [class.today]="day.isToday"
+            [class.has-events]="hasEvents(day)"
+            (click)="selectDay(day)"
+          >
+            <span class="calendar__date">{{ day.date.getDate() }}</span>
+            @if (hasEvents(day)) {
+              <div class="calendar__events">
+                @for (task of day.tasks.slice(0, 2); track task.id) {
+                  <div class="event event--task">
+                    <span class="event__dot bg-{{ getPriorityClass(task.priority) }}"></span>
+                    <span class="event__title">{{ task.title }}</span>
+                  </div>
+                }
+                @for (project of day.projects.slice(0, 2); track project.id) {
+                  <div class="event event--project">
+                    <span class="event__dot bg-info"></span>
+                    <span class="event__title">{{ project.title }}</span>
+                  </div>
+                }
+                @if (day.tasks.length + day.projects.length > 2) {
+                  <div class="event__more">+{{ day.tasks.length + day.projects.length - 2 }} more</div>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="legend">
+      <div class="legend__item">
+        <span class="legend__dot bg-danger"></span> High Priority
+      </div>
+      <div class="legend__item">
+        <span class="legend__dot bg-warning"></span> Medium Priority
+      </div>
+      <div class="legend__item">
+        <span class="legend__dot bg-secondary"></span> Low Priority
+      </div>
+      <div class="legend__item">
+        <span class="legend__dot bg-info"></span> Project Deadline
+      </div>
+    </div>
+  }
+</div>
+
+<!-- Day Detail Modal -->
+@if (selectedDay()) {
+  <div class="modal-backdrop" (click)="closeDetail()"></div>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-calendar3 me-2"></i>
+          {{ selectedDay()!.date.toLocaleDateString('default', { weekday: 'long', month: 'long', day: 'numeric' }) }}
+        </h5>
+        <button type="button" class="btn-close" (click)="closeDetail()"></button>
+      </div>
+      <div class="modal-body">
+        @if (selectedDay()!.tasks.length > 0) {
+          <h6 class="mb-3"><i class="bi bi-check2-square me-2"></i> Tasks Due</h6>
+          <div class="event-list">
+            @for (task of selectedDay()!.tasks; track task.id) {
+              <a [routerLink]="['/projects', task.project_id]" class="event-item">
+                <span class="badge bg-{{ getPriorityClass(task.priority) }} me-2">{{ task.priority }}</span>
+                <span class="badge bg-{{ getStatusClass(task.status) }} me-2">{{ task.status.replace('_', ' ') }}</span>
+                <span class="event-item__title">{{ task.title }}</span>
+              </a>
+            }
+          </div>
+        }
+
+        @if (selectedDay()!.projects.length > 0) {
+          <h6 class="mb-3 mt-4"><i class="bi bi-folder me-2"></i> Project Deadlines</h6>
+          <div class="event-list">
+            @for (project of selectedDay()!.projects; track project.id) {
+              <a [routerLink]="['/projects', project.id]" class="event-item">
+                <span class="badge bg-{{ getStatusClass(project.status) }} me-2">{{ project.status.replace('_', ' ') }}</span>
+                <span class="event-item__title">{{ project.title }}</span>
+              </a>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+}

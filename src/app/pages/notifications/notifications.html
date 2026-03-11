@@ -1,0 +1,58 @@
+<div class="page">
+  <div class="page__header">
+    <div>
+      <h1 class="page__title">Notifications</h1>
+      <p class="page__subtitle">
+        @if (unreadCount() > 0) {
+          You have {{ unreadCount() }} unread notification{{ unreadCount() > 1 ? 's' : '' }}
+        } @else {
+          All caught up!
+        }
+      </p>
+    </div>
+    @if (unreadCount() > 0) {
+      <button class="btn btn-outline-primary" (click)="markAllAsRead()">
+        <i class="bi bi-check-all me-2"></i> Mark All Read
+      </button>
+    }
+  </div>
+
+  @if (notifications().length === 0) {
+    <div class="empty-state">
+      <i class="bi bi-bell-slash"></i>
+      <h3>No notifications</h3>
+      <p>You're all caught up! Notifications will appear here when there's activity on your projects and tasks.</p>
+    </div>
+  } @else {
+    <div class="notification-list">
+      @for (notification of notifications(); track notification.id) {
+        <div
+          class="notification-card"
+          [class.notification-card--unread]="!notification.is_read"
+          (click)="markAsRead(notification.id)"
+        >
+          <div class="notification-card__icon notification-card__icon--{{ getTypeClass(notification.type) }}">
+            <i class="bi {{ getTypeIcon(notification.type) }}"></i>
+          </div>
+          <div class="notification-card__content">
+            <div class="notification-card__header">
+              <span class="notification-card__title">{{ notification.title }}</span>
+              <span class="notification-card__time">{{ formatDate(notification.created_at) }}</span>
+            </div>
+            @if (notification.body) {
+              <p class="notification-card__body">{{ notification.body }}</p>
+            }
+            @if (notification.link) {
+              <a [routerLink]="notification.link" class="notification-card__link">
+                View Details <i class="bi bi-arrow-right"></i>
+              </a>
+            }
+          </div>
+          @if (!notification.is_read) {
+            <span class="notification-card__dot"></span>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

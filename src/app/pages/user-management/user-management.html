@@ -1,0 +1,312 @@
+<div class="page">
+  <div class="page__header">
+    <div>
+      <h1 class="page__title">User Management</h1>
+      <p class="page__subtitle">Invite and manage team members</p>
+    </div>
+    <button class="btn btn-primary" (click)="openInviteModal()">
+      <i class="bi bi-person-plus me-2"></i> Invite User
+    </button>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters">
+    <div class="filters__search">
+      <i class="bi bi-search"></i>
+      <input
+        type="text"
+        class="form-control"
+        placeholder="Search by name or email..."
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event); onSearchChange()"
+      />
+    </div>
+    <select class="form-select filters__select" [ngModel]="selectedRole()" (ngModelChange)="selectedRole.set($event); onRoleFilterChange()">
+      <option value="all">All Roles</option>
+      <option value="admin">Admin</option>
+      <option value="manager">Manager</option>
+      <option value="user">Employee</option>
+    </select>
+    <select class="form-select filters__page-size" [ngModel]="pageSize()" (ngModelChange)="changePageSize($event)">
+      @for (size of pageSizeOptions; track size) {
+        <option [value]="size">{{ size }} per page</option>
+      }
+    </select>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-box">
+      <span class="stat-box__value">{{ users().length }}</span>
+      <span class="stat-box__label">Total Users</span>
+    </div>
+    <div class="stat-box stat-box--admin">
+      <span class="stat-box__value">{{ users().filter(u => u.role === 'admin').length }}</span>
+      <span class="stat-box__label">Admins</span>
+    </div>
+    <div class="stat-box stat-box--manager">
+      <span class="stat-box__value">{{ users().filter(u => u.role === 'manager').length }}</span>
+      <span class="stat-box__label">Managers</span>
+    </div>
+    <div class="stat-box stat-box--user">
+      <span class="stat-box__value">{{ users().filter(u => u.role === 'user').length }}</span>
+      <span class="stat-box__label">Employees</span>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="loading">
+      <div class="spinner"></div>
+      <span>Loading users...</span>
+    </div>
+  } @else {
+    <div class="user-table">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Role</th>
+            <th>Department</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (paginatedUsers().length === 0) {
+            <tr>
+              <td colspan="5" class="text-center py-4 text-muted">
+                <i class="bi bi-search me-2"></i>
+                No users found matching your criteria
+              </td>
+            </tr>
+          }
+          @for (user of paginatedUsers(); track user.id) {
+            <tr [class.deactivated]="user.status === 'deactivated'">
+              <td>
+                <div class="user-cell">
+                  <span class="avatar">{{ getInitials(user.full_name) }}</span>
+                  <div class="user-cell__info">
+                    <strong>{{ user.full_name }}</strong>
+                    <span>{{ user.email }}</span>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="badge bg-{{ getRoleClass(user.role) }}">{{ user.role }}</span>
+              </td>
+              <td>{{ user.department || '—' }}</td>
+              <td>
+                <span class="badge bg-{{ getStatusClass(user.status) }}">{{ user.status }}</span>
+              </td>
+              <td>
+                <div class="action-btns">
+                  <button class="btn btn-sm btn-outline-primary" (click)="openEditModal(user)" title="Edit">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  @if (user.status !== 'deactivated' && user.id !== api.user()?.id) {
+                    <button class="btn btn-sm btn-outline-danger" (click)="deactivateUser(user)" title="Deactivate">
+                      <i class="bi bi-person-x"></i>
+                    </button>
+                  }
+                  @if (user.status === 'deactivated') {
+                    <button class="btn btn-sm btn-outline-success" (click)="activateUser(user)" title="Activate">
+                      <i class="bi bi-person-check"></i>
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      <!-- Pagination -->
+      @if (totalPages() > 1) {
+        <div class="pagination-wrapper">
+          <div class="pagination-info">
+            Showing {{ (currentPage() - 1) * pageSize() + 1 }} - {{ Math.min(currentPage() * pageSize(), filteredUsers().length) }} of {{ filteredUsers().length }} users
+          </div>
+          <nav class="pagination-nav">
+            <button class="pagination-btn" [disabled]="currentPage() === 1" (click)="prevPage()">
+              <i class="bi bi-chevron-left"></i>
+            </button>
+            @for (page of pageNumbers(); track $index) {
+              @if (page === '...') {
+                <span class="pagination-ellipsis">...</span>
+              } @else {
+                <button
+                  class="pagination-btn"
+                  [class.active]="page === currentPage()"
+                  (click)="goToPage(page)"
+                >
+                  {{ page }}
+                </button>
+              }
+            }
+            <button class="pagination-btn" [disabled]="currentPage() === totalPages()" (click)="nextPage()">
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </nav>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- Invite Modal -->
+@if (showInviteModal()) {
+  <div class="modal-backdrop" (click)="closeInviteModal()"></div>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-person-plus me-2"></i> Invite New User
+        </h5>
+        <button type="button" class="btn-close" (click)="closeInviteModal()"></button>
+      </div>
+      <div class="modal-body">
+        @if (inviteSuccess()) {
+          <div class="alert alert-success">
+            <i class="bi bi-envelope-check me-2"></i>
+            <strong>Invitation sent!</strong><br>
+            An email has been sent to <strong>{{ inviteForm.email }}</strong> with a link to complete registration.
+          </div>
+        }
+
+        @if (inviteError()) {
+          <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            {{ inviteError() }}
+          </div>
+        }
+
+        <div class="mb-3">
+          <label class="form-label">Email Address <span class="text-danger">*</span></label>
+          <input
+            type="email"
+            class="form-control"
+            [(ngModel)]="inviteForm.email"
+            placeholder="user@company.com"
+            [disabled]="inviting()"
+          />
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Full Name <span class="text-danger">*</span></label>
+          <input
+            type="text"
+            class="form-control"
+            [(ngModel)]="inviteForm.full_name"
+            placeholder="John Doe"
+            [disabled]="inviting()"
+          />
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Role <span class="text-danger">*</span></label>
+          <select class="form-select" [(ngModel)]="inviteForm.role" [disabled]="inviting()">
+            <option value="user">Employee</option>
+            <option value="manager">Manager</option>
+            <option value="admin">Admin</option>
+          </select>
+          <div class="form-text">
+            @switch (inviteForm.role) {
+              @case ('admin') {
+                <i class="bi bi-shield-fill text-danger me-1"></i>
+                Full platform access, can manage all projects and users
+              }
+              @case ('manager') {
+                <i class="bi bi-briefcase-fill text-primary me-1"></i>
+                Can manage assigned projects, review interests, create tasks
+              }
+              @case ('user') {
+                <i class="bi bi-person-fill text-secondary me-1"></i>
+                Can view projects, show interest, work on assigned tasks
+              }
+            }
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Department</label>
+          <input
+            type="text"
+            class="form-control"
+            [(ngModel)]="inviteForm.department"
+            placeholder="Engineering, Marketing, etc."
+            [disabled]="inviting()"
+          />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" (click)="closeInviteModal()" [disabled]="inviting()">
+          Cancel
+        </button>
+        <button type="button" class="btn btn-primary" (click)="inviteUser()" [disabled]="inviting() || inviteSuccess()">
+          @if (inviting()) {
+            <span class="spinner-border spinner-border-sm me-2"></span>
+            Sending...
+          } @else {
+            <i class="bi bi-envelope me-2"></i>
+            Send Invitation
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Edit Modal -->
+@if (showEditModal()) {
+  <div class="modal-backdrop" (click)="closeEditModal()"></div>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-pencil me-2"></i> Edit User
+        </h5>
+        <button type="button" class="btn-close" (click)="closeEditModal()"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">Full Name</label>
+          <input type="text" class="form-control" [(ngModel)]="editForm.full_name" [disabled]="saving()" />
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Role</label>
+          <select class="form-select" [(ngModel)]="editForm.role" [disabled]="saving()">
+            <option value="user">Employee</option>
+            <option value="manager">Manager</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Department</label>
+          <input type="text" class="form-control" [(ngModel)]="editForm.department" [disabled]="saving()" />
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Status</label>
+          <select class="form-select" [(ngModel)]="editForm.status" [disabled]="saving()">
+            <option value="invited">Invited</option>
+            <option value="active">Active</option>
+            <option value="deactivated">Deactivated</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" (click)="closeEditModal()" [disabled]="saving()">
+          Cancel
+        </button>
+        <button type="button" class="btn btn-primary" (click)="saveUser()" [disabled]="saving()">
+          @if (saving()) {
+            <span class="spinner-border spinner-border-sm me-2"></span>
+          }
+          Save Changes
+        </button>
+      </div>
+    </div>
+  </div>
+}

@@ -1,0 +1,160 @@
+<section class="login-page">
+  <div class="container-fluid h-100">
+    <div class="row g-0 min-vh-100">
+      <div class="col-lg-6 d-none d-lg-flex">
+        <div class="login-carousel">
+          <div class="login-carousel__stage">
+            @for (image of carouselImages; track image; let index = $index) {
+              <div
+                class="login-carousel__slide"
+                [class.is-active]="activeSlide() === index"
+                [style.background-image]="'url(' + image + ')'"
+              ></div>
+            }
+
+            <div class="login-carousel__controls">
+              <div class="login-carousel__dots">
+                @for (image of carouselImages; track image; let index = $index) {
+                  <button
+                    type="button"
+                    class="login-carousel__dot"
+                    [class.is-active]="activeSlide() === index"
+                    (click)="setActiveSlide(index)"
+                    [attr.aria-label]="'Go to slide ' + (index + 1)"
+                  ></button>
+                }
+              </div>
+
+              <div class="login-carousel__nav">
+                <button
+                  type="button"
+                  class="login-carousel__nav-btn"
+                  (click)="previousSlide()"
+                  aria-label="Previous"
+                >
+                  <i class="bi bi-chevron-left"></i>
+                </button>
+                <button
+                  type="button"
+                  class="login-carousel__nav-btn"
+                  (click)="nextSlide()"
+                  aria-label="Next"
+                >
+                  <i class="bi bi-chevron-right"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6 d-flex align-items-center justify-content-center">
+        <div class="login-form-wrapper">
+          <div class="login-form-card">
+            <div class="d-lg-none text-center mb-4">
+              <div class="login-mobile-logo mx-auto mb-3">
+                <i class="bi bi-layers-fill"></i>
+              </div>
+              <span class="fw-bold text-dark fs-5">IntraFlow</span>
+            </div>
+
+            <div class="login-form-header">
+              <h1 class="login-form-title">Welcome</h1>
+              <p class="login-form-subtitle">Sign in to continue to your workspace</p>
+            </div>
+
+            @if (!api.initialized()) {
+              <div class="login-loading">
+                <div class="login-loading__spinner"></div>
+                <span>Preparing your workspace...</span>
+              </div>
+            } @else {
+              <form [formGroup]="loginForm" (ngSubmit)="submit()" novalidate>
+                <div class="login-field">
+                  <label for="email" class="login-field__label">Email address</label>
+                  <div class="login-field__input-wrap" [class.has-error]="showError('email')">
+                    <i class="bi bi-envelope login-field__icon"></i>
+                    <input
+                      id="email"
+                      type="email"
+                      formControlName="email"
+                      autocomplete="email"
+                      placeholder="name@company.com"
+                      class="login-field__input"
+                    />
+                  </div>
+                  @if (showError('email')) {
+                    <span class="login-field__error">Please enter a valid email</span>
+                  }
+                </div>
+
+                <div class="login-field">
+                  <label for="password" class="login-field__label">Password</label>
+                  <div class="login-field__input-wrap" [class.has-error]="showError('password')">
+                    <i class="bi bi-lock login-field__icon"></i>
+                    <input
+                      id="password"
+                      type="password"
+                      formControlName="password"
+                      autocomplete="current-password"
+                      placeholder="Enter your password"
+                      class="login-field__input"
+                    />
+                  </div>
+                  @if (showError('password')) {
+                    <span class="login-field__error">Password is required</span>
+                  }
+                </div>
+
+                @if (deactivatedError()) {
+                  <div class="login-alert login-alert--danger">
+                    <i class="bi bi-person-x-fill"></i>
+                    <span>Your account has been deactivated. Please contact your administrator.</span>
+                  </div>
+                }
+
+                @if (api.errorMessage()) {
+                  <div class="login-alert">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <span>{{ api.errorMessage() }}</span>
+                  </div>
+                }
+
+                <button
+                  type="submit"
+                  class="login-submit"
+                  [class.is-loading]="api.isLoading()"
+                  [disabled]="api.isLoading()"
+                >
+                  @if (api.isLoading()) {
+                    <span class="login-submit__spinner"></span>
+                    <span>Signing in...</span>
+                  } @else {
+                    <span>Sign in</span>
+                    <i class="bi bi-arrow-right"></i>
+                  }
+                </button>
+              </form>
+            }
+
+            <div class="login-footer">
+              <div class="login-footer__divider">
+                <span>Secured by</span>
+              </div>
+              <div class="login-footer__badges">
+                <span class="login-footer__badge">
+                  <i class="bi bi-shield-check"></i>
+                  Supabase Auth
+                </span>
+                <span class="login-footer__badge">
+                  <i class="bi bi-lock-fill"></i>
+                  SSL Encrypted
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
