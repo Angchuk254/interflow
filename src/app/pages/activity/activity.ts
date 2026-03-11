@@ -124,11 +124,11 @@ export class Activity implements OnInit, AfterViewInit {
         datasets: [{
           label: 'Activities',
           data: data.map((d) => d.count),
-          borderColor: '#0d9488',
+          borderColor: '#2B318D',
           backgroundColor: 'rgba(13, 148, 136, 0.1)',
           fill: true,
           tension: 0.4,
-          pointBackgroundColor: '#0d9488',
+          pointBackgroundColor: '#2B318D',
           pointBorderWidth: 0,
           pointRadius: 4,
           pointHoverRadius: 6,
@@ -160,7 +160,7 @@ export class Activity implements OnInit, AfterViewInit {
 
     if (this.actionChart) this.actionChart.destroy();
 
-    const colors = ['#0d9488', '#0891b2', '#6366f1', '#f59e0b', '#ef4444', '#8b5cf6'];
+    const colors = ['#2B318D', '#50B748', '#6366f1', '#f59e0b', '#ef4444', '#8b5cf6'];
 
     this.actionChart = new Chart(ctx, {
       type: 'doughnut',
@@ -192,7 +192,7 @@ export class Activity implements OnInit, AfterViewInit {
 
     if (this.entityChart) this.entityChart.destroy();
 
-    const colors = ['#0d9488', '#0891b2', '#6366f1', '#f59e0b', '#ef4444'];
+    const colors = ['#2B318D', '#50B748', '#6366f1', '#f59e0b', '#ef4444'];
 
     this.entityChart = new Chart(ctx, {
       type: 'bar',
@@ -240,7 +240,7 @@ export class Activity implements OnInit, AfterViewInit {
         datasets: [{
           label: 'Activities',
           data: data.map((d) => d.count),
-          backgroundColor: '#0d9488',
+          backgroundColor: '#2B318D',
           borderRadius: 8,
           maxBarThickness: 40,
         }],

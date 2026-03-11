@@ -7,7 +7,7 @@
 // Sidebar
 .sidebar {
   width: 260px;
-  background: linear-gradient(180deg, #0d9488, #0891b2);
+  background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -125,7 +125,7 @@
   }
 }
 
-// Topbar
+// Topbar - with subtle primary accent at top
 .topbar {
   display: flex;
   align-items: center;
@@ -133,9 +133,20 @@
   padding: 1rem 1.5rem;
   background: white;
   border-bottom: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   position: sticky;
   top: 0;
   z-index: 900;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary), var(--primary-light));
+  }
 
   &__left {
     display: flex;
@@ -169,7 +180,7 @@
     align-items: center;
     gap: 0.25rem;
     padding: 0.5rem 1rem;
-    background: linear-gradient(135deg, #0d9488, #0891b2);
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
     color: white;
     font-size: 0.875rem;
     font-weight: 600;
@@ -179,7 +190,7 @@
 
     &:hover {
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
+      box-shadow: 0 6px 20px rgba(var(--primary-rgb), 0.35);
       color: white;
     }
 
@@ -204,12 +215,12 @@
     transition: all 0.2s ease;
 
     &:hover {
-      background: #f1f5f9;
-      color: #0d9488;
+      background: var(--primary-lighter);
+      color: var(--primary);
     }
 
     &.has-new {
-      color: #0d9488;
+      color: var(--primary);
       
       &::after {
         content: '';
@@ -278,7 +289,7 @@
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 50%;
-  background: linear-gradient(135deg, #0d9488, #0891b2);
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
   color: white;
   font-weight: 600;
   font-size: 0.875rem;
@@ -316,7 +327,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 0.875rem 1rem;
-    background: linear-gradient(135deg, #0d9488, #0891b2);
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
     color: white;
     border-radius: 0.75rem 0.75rem 0 0;
 
@@ -363,7 +374,7 @@
     border-radius: 0 0 0.75rem 0.75rem;
 
     a {
-      color: #0d9488;
+      color: var(--primary);
       font-size: 0.875rem;
       font-weight: 500;
       text-decoration: none;
@@ -413,8 +424,8 @@
   transition: background 0.2s ease;
 
   &:hover {
-    background: #f8fafc;
-    color: #0d9488;
+    background: var(--primary-lighter);
+    color: var(--primary);
   }
 }
 
@@ -450,11 +461,11 @@
   }
 
   &.unread {
-    background: #f0fdfa;
-    border-left: 3px solid #0d9488;
+    background: var(--secondary-lighter);
+    border-left: 3px solid var(--secondary);
 
     &:hover {
-      background: #ccfbf1;
+      background: rgba(var(--secondary-rgb), 0.08);
     }
   }
 
@@ -475,8 +486,8 @@
     font-size: 0.875rem;
     flex-shrink: 0;
 
-    &--interest { background: #dbeafe; color: #2563eb; }
-    &--task { background: #dcfce7; color: #16a34a; }
+    &--interest { background: rgba(var(--primary-rgb), 0.12); color: var(--primary); }
+    &--task { background: var(--secondary-lighter); color: var(--secondary); }
     &--project { background: #fef3c7; color: #d97706; }
     &--default { background: #e2e8f0; color: #64748b; }
   }
@@ -513,6 +524,7 @@
 .main-content {
   flex: 1;
   padding: 1.5rem;
+  background: #f8fafc;
 }
 
 // Responsive

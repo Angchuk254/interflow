@@ -63,6 +63,11 @@
         <div class="project-card" [class.project-card--favorite]="isFavorite(project.id)">
           <div class="project-card__header">
             <div class="project-card__badges">
+              @if (project.archived_at) {
+                <span class="badge bg-secondary">
+                  <i class="bi bi-pause-circle me-1"></i> Disabled
+                </span>
+              }
               <span class="badge bg-{{ getStatusClass(project.status) }}">
                 {{ project.status.replace('_', ' ') }}
               </span>

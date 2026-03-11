@@ -106,8 +106,10 @@ export class TaskBoard implements OnInit {
       this.tasks.update((list) =>
         list.map((t) => (t.id === task.id ? { ...t, status: newStatus } : t))
       );
-    } catch {
-      alert('Failed to update task status');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? String(err);
+      console.error('Task status update error:', err);
+      alert(`Failed to update task status: ${msg}\n\nIf this is a permission error, run the SQL in supabase/RUN_THIS_TO_FIX_TASK_START.md`);
     } finally {
       this.draggedTask.set(null);
     }
@@ -121,8 +123,10 @@ export class TaskBoard implements OnInit {
       this.tasks.update((list) =>
         list.map((t) => (t.id === task.id ? { ...t, status: newStatus } : t))
       );
-    } catch {
-      alert('Failed to update task status');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? String(err);
+      console.error('Task status update error:', err);
+      alert(`Failed to update task status: ${msg}\n\nIf this is a permission error, run the SQL in supabase/RUN_THIS_TO_FIX_TASK_START.md`);
     }
   }
 

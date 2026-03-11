@@ -124,7 +124,7 @@ export class AdminDashboard implements OnInit, AfterViewInit {
         labels: ['Completed', 'In Progress', 'Not Started', 'Delayed', 'On Hold'],
         datasets: [{
           data: [s.completedProjects, s.activeProjects, s.notStartedProjects, s.delayedProjects, s.onHoldProjects],
-          backgroundColor: ['#16a34a', '#2563eb', '#64748b', '#dc2626', '#f59e0b'],
+          backgroundColor: ['#50B748', '#2B318D', '#64748b', '#dc2626', '#f59e0b'],
           borderWidth: 0,
         }],
       },
@@ -167,7 +167,7 @@ export class AdminDashboard implements OnInit, AfterViewInit {
         datasets: [{
           label: 'Activities',
           data: activityCounts,
-          backgroundColor: '#0d9488',
+          backgroundColor: '#2B318D',
           borderRadius: 6,
           maxBarThickness: 40,
         }],

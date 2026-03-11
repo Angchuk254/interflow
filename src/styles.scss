@@ -2,7 +2,16 @@
 @import 'bootstrap-icons/font/bootstrap-icons.css';
 
 :root {
-  font-family: Inter, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --primary: #2B318D;
+  --primary-light: #3d45a8;
+  --primary-lighter: rgba(43, 49, 141, 0.12);
+  --primary-dark: #1e2363;
+  --secondary: #50B748;
+  --secondary-light: #6bc963;
+  --secondary-lighter: rgba(80, 183, 72, 0.12);
+  --primary-rgb: 43, 49, 141;
+  --secondary-rgb: 80, 183, 72;
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
   color: #0f172a;
   background: #ffffff;
 }
@@ -19,7 +28,7 @@ body {
 body {
   margin: 0;
   color: #0f172a;
-  background: #ffffff;
+  background: #f8fafc;
 }
 
 body,
@@ -53,16 +62,16 @@ input::placeholder {
   position: relative;
   overflow: hidden;
   background:
-    radial-gradient(circle at top left, rgba(59, 130, 246, 0.16), transparent 24%),
-    radial-gradient(circle at bottom right, rgba(168, 85, 247, 0.14), transparent 28%),
-    linear-gradient(135deg, #f8fbff 0%, #eef4ff 48%, #fdf7ff 100%);
+    radial-gradient(circle at top left, rgba(var(--primary-rgb), 0.12), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(var(--secondary-rgb), 0.1), transparent 26%),
+    linear-gradient(135deg, #f8fafc 0%, #f0f4ff 50%, #f0fdf4 100%);
 }
 
 .gradient-section::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0));
   pointer-events: none;
 }
 
@@ -73,16 +82,16 @@ input::placeholder {
 
 .surface-card {
   background: #ffffff;
-  border: 1px solid rgba(148, 163, 184, 0.22);
-  border-radius: 1.5rem;
-  box-shadow: 0 18px 55px rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 1rem;
+  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
 }
 
 .surface-card:hover,
 .stat-box:hover,
 .info-box:hover {
   transform: translateY(-2px);
-  box-shadow: 0 24px 60px rgba(37, 99, 235, 0.12);
+  box-shadow: 0 12px 40px rgba(var(--primary-rgb), 0.12);
 }
 
 .section-kicker {
@@ -91,8 +100,8 @@ input::placeholder {
   gap: 0.45rem;
   padding: 0.55rem 0.85rem;
   border-radius: 999px;
-  background: rgba(37, 99, 235, 0.08);
-  color: #2563eb;
+  background: var(--primary-lighter);
+  color: var(--primary);
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -107,8 +116,8 @@ input::placeholder {
   justify-content: center;
   border-radius: 1rem;
   color: #ffffff;
-  background: linear-gradient(135deg, #2563eb, #7c3aed);
-  box-shadow: 0 14px 30px rgba(37, 99, 235, 0.22);
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  box-shadow: 0 8px 24px rgba(var(--primary-rgb), 0.25);
 }
 
 .stat-box,
@@ -116,9 +125,9 @@ input::placeholder {
   height: 100%;
   padding: 1.1rem;
   background: #ffffff;
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  border-radius: 1.25rem;
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  border-radius: 1rem;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04);
 }
 
 .stat-label {
@@ -141,15 +150,15 @@ input::placeholder {
 .gradient-button {
   border: 0;
   color: #ffffff;
-  background: linear-gradient(135deg, #2563eb, #7c3aed);
-  box-shadow: 0 18px 35px rgba(79, 70, 229, 0.2);
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  box-shadow: 0 8px 24px rgba(var(--primary-rgb), 0.25);
 }
 
 .gradient-button:hover:not(:disabled),
 .gradient-button:focus-visible {
   color: #ffffff;
-  background: linear-gradient(135deg, #1d4ed8, #6d28d9);
-  box-shadow: 0 22px 42px rgba(79, 70, 229, 0.24);
+  background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+  box-shadow: 0 12px 32px rgba(var(--primary-rgb), 0.3);
 }
 
 .soft-button {
@@ -160,7 +169,32 @@ input::placeholder {
 
 .soft-button:hover:not(:disabled),
 .soft-button:focus-visible {
-  color: #0f172a;
-  background: #f8fafc;
-  border-color: rgba(37, 99, 235, 0.28);
+  color: var(--primary);
+  background: var(--primary-lighter);
+  border-color: rgba(var(--primary-rgb), 0.25);
 }
+
+/* Bootstrap overrides */
+.btn-primary {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  &:hover {
+    background: var(--primary-dark) !important;
+    border-color: var(--primary-dark) !important;
+  }
+}
+
+.btn-success {
+  background: var(--secondary) !important;
+  border-color: var(--secondary) !important;
+  &:hover {
+    background: #45a040 !important;
+    border-color: #45a040 !important;
+  }
+}
+
+.bg-primary { background-color: var(--primary) !important; }
+.text-primary { color: var(--primary) !important; }
+.border-primary { border-color: var(--primary) !important; }
+.text-success { color: var(--secondary) !important; }
+.bg-success { background-color: var(--secondary) !important; }

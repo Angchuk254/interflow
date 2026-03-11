@@ -32,6 +32,7 @@ export class ProjectDetail implements OnInit {
   readonly comments = signal<ProjectComment[]>([]);
   
   readonly activeTab = signal<'overview' | 'tasks' | 'team' | 'comments' | 'interests'>('overview');
+  readonly showAdminMenu = signal(false);
   
   newComment = '';
 
@@ -91,8 +92,9 @@ export class ProjectDetail implements OnInit {
     if (!id) return;
 
     try {
+      const includeArchived = this.api.isAdmin();
       const [project, tasks, comments] = await Promise.all([
-        this.projectService.getProjectById(id),
+        this.projectService.getProjectById(id, includeArchived),
         this.taskService.getTasks(id),
         this.commentService.getProjectComments(id).catch(() => []),
       ]);
@@ -210,7 +212,7 @@ export class ProjectDetail implements OnInit {
       // Reload project to get updated contributors
       const id = this.project()?.id;
       if (id) {
-        const project = await this.projectService.getProjectById(id);
+        const project = await this.projectService.getProjectById(id, this.api.isAdmin());
         this.project.set(project);
       }
     } catch {
@@ -235,6 +237,52 @@ export class ProjectDetail implements OnInit {
     if (id) {
       this.router.navigate(['/projects', id, 'edit']);
     }
+  }
+
+  async archiveProject(): Promise<void> {
+    const project = this.project();
+    if (!project || !this.api.isAdmin()) return;
+    if (!confirm(`Disable project "${project.title}"? It will be hidden from everyone except admins.`)) return;
+
+    try {
+      await this.projectService.archiveProject(project.id);
+      this.project.update((p) => (p ? { ...p, archived_at: new Date().toISOString() } : p));
+    } catch {
+      alert('Failed to disable project');
+    }
+  }
+
+  async unarchiveProject(): Promise<void> {
+    const project = this.project();
+    if (!project || !this.api.isAdmin()) return;
+
+    try {
+      await this.projectService.unarchiveProject(project.id);
+      this.project.update((p) => (p ? { ...p, archived_at: null } : p));
+    } catch {
+      alert('Failed to enable project');
+    }
+  }
+
+  async deleteProject(): Promise<void> {
+    const project = this.project();
+    if (!project || !this.api.isAdmin()) return;
+    if (!confirm(`Permanently delete project "${project.title}"? This cannot be undone. The project will be hidden from everyone.`)) return;
+
+    try {
+      await this.projectService.deleteProject(project.id);
+      this.router.navigate(['/projects']);
+    } catch {
+      alert('Failed to delete project');
+    }
+  }
+
+  toggleAdminMenu(): void {
+    this.showAdminMenu.update((v) => !v);
+  }
+
+  closeAdminMenu(): void {
+    this.showAdminMenu.set(false);
   }
 
   onCommentInput(event: Event): void {

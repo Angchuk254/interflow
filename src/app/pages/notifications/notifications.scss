@@ -112,7 +112,7 @@
 
     &--info {
       background: #f0fdfa;
-      color: #0d9488;
+      color: var(--primary);
     }
 
     &--secondary {
@@ -156,7 +156,7 @@
     align-items: center;
     gap: 0.25rem;
     font-size: 0.875rem;
-    color: #0d9488;
+    color: var(--primary);
     text-decoration: none;
     margin-top: 0.5rem;
 
@@ -172,6 +172,6 @@
     width: 0.5rem;
     height: 0.5rem;
     border-radius: 50%;
-    background: #0d9488;
+    background: var(--primary);
   }
 }

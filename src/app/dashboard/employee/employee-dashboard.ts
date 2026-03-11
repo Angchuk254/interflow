@@ -188,7 +188,7 @@ export class EmployeeDashboard implements OnInit, AfterViewInit {
           {
             label: 'Logged Hours',
             data: [stats.weeklyHours, stats.monthlyHours],
-            backgroundColor: '#0d9488',
+            backgroundColor: '#2B318D',
             borderRadius: 6,
           },
           {

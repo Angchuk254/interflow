@@ -61,8 +61,10 @@ export class Tasks implements OnInit {
     try {
       await this.taskService.completeTask(task.id);
       await this.loadTasks();
-    } catch (err) {
-      alert('Failed to complete task');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? String(err);
+      console.error('Complete task error:', err);
+      alert(`Failed to complete task: ${msg}\n\nIf this is a permission error, run the SQL in supabase/RUN_THIS_TO_FIX_TASK_START.md`);
     }
   }
 

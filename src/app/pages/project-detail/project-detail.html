@@ -1,4 +1,4 @@
-<div class="page">
+<div class="page" (click)="closeAdminMenu()">
   @if (loading()) {
     <div class="loading">
       <div class="spinner"></div>
@@ -12,6 +12,14 @@
       <a routerLink="/projects" class="btn btn-primary mt-3">Back to Projects</a>
     </div>
   } @else {
+    @if (project()!.archived_at) {
+      <div class="archived-banner">
+        <i class="bi bi-pause-circle-fill me-2"></i>
+        <strong>This project is disabled.</strong>
+        Enable it from the Actions menu above.
+      </div>
+    }
+
     <!-- Project Header -->
     <div class="project-header">
       <div class="project-header__top">
@@ -26,6 +34,30 @@
             <a [routerLink]="['/projects', project()!.id, 'tasks', 'new']" class="btn btn-primary">
               <i class="bi bi-plus-lg me-1"></i> Add Task
             </a>
+          }
+          @if (canManage()) {
+            <div class="admin-actions-dropdown" (click)="$event.stopPropagation()">
+              <button class="btn btn-outline-secondary" type="button" (click)="toggleAdminMenu()">
+                <i class="bi bi-three-dots-vertical me-1"></i> Actions
+              </button>
+              @if (showAdminMenu()) {
+                <div class="admin-actions-menu">
+                  @if (project()!.archived_at) {
+                    <button class="dropdown-item" (click)="unarchiveProject(); closeAdminMenu()">
+                      <i class="bi bi-check-circle me-2"></i> Enable Project
+                    </button>
+                  } @else {
+                    <button class="dropdown-item text-warning" (click)="archiveProject(); closeAdminMenu()">
+                      <i class="bi bi-pause-circle me-2"></i> Disable Project
+                    </button>
+                  }
+                  <div class="dropdown-divider"></div>
+                  <button class="dropdown-item text-danger" (click)="deleteProject(); closeAdminMenu()">
+                    <i class="bi bi-trash me-2"></i> Delete Project
+                  </button>
+                </div>
+              }
+            </div>
           }
         </div>
       </div>

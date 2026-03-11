@@ -90,7 +90,10 @@ export class TaskService {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      const msg = (error as { message?: string }).message ?? JSON.stringify(error);
+      throw new Error(msg);
+    }
     return data as Task;
   }
 
@@ -126,7 +129,10 @@ export class TaskService {
       .update(updates)
       .eq('id', id);
 
-    if (error) throw error;
+    if (error) {
+      const msg = (error as { message?: string }).message ?? JSON.stringify(error);
+      throw new Error(msg);
+    }
   }
 
   async completeTask(id: string): Promise<void> {

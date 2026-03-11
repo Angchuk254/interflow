@@ -26,7 +26,7 @@ import { Api } from '../services/api';
       width: 2.5rem;
       height: 2.5rem;
       border: 3px solid #e2e8f0;
-      border-top-color: #0d9488;
+      border-top-color: var(--primary);
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }

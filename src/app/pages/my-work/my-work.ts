@@ -99,8 +99,10 @@ export class MyWork implements OnInit {
           t.id === task.id ? { ...t, status: 'completed' as const, review_status: 'pending_review' as const } : t
         )
       );
-    } catch {
-      alert('Failed to mark task as complete');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? String(err);
+      console.error('Mark complete error:', err);
+      alert(`Failed to mark task as complete: ${msg}\n\nIf this is a permission error, run the SQL in supabase/RUN_THIS_TO_FIX_TASK_START.md`);
     }
   }
 
@@ -108,14 +110,16 @@ export class MyWork implements OnInit {
     try {
       await this.taskService.updateTask(task.id, { status: status as Task['status'] });
       this.myTasks.update((list) => list.map((t) => (t.id === task.id ? { ...t, status: status as Task['status'] } : t)));
-    } catch {
-      alert('Failed to update task status');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? String(err);
+      console.error('Task status update error:', err);
+      alert(`Failed to update task status: ${msg}\n\nIf this is a permission error, run the SQL in supabase/RUN_THIS_TO_FIX_TASK_START.md`);
     }
   }
 
   async startTask(task: Task): Promise<void> {
     try {
-      await this.taskService.updateTask(task.id, { status: 'in_progress' });
+      await this.taskService.updateTaskStatus(task.id, 'in_progress');
       this.myTasks.update((list) =>
         list.map((t) => (t.id === task.id ? { ...t, status: 'in_progress' as const } : t))
       );
@@ -129,8 +133,10 @@ export class MyWork implements OnInit {
       } finally {
         this.loadingComments.set(false);
       }
-    } catch {
-      alert('Failed to start task');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? String(err);
+      console.error('Start task error:', err);
+      alert(`Failed to start task: ${msg}\n\nRun the SQL in supabase/RUN_THIS_TO_FIX_TASK_START.md to fix permission.`);
     }
   }
 

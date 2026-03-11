@@ -57,8 +57,9 @@ export class Projects implements OnInit {
 
   async ngOnInit(): Promise<void> {
     try {
+      const includeArchived = this.api.isAdmin();
       const [projects, tags] = await Promise.all([
-        this.projectService.getProjects(),
+        this.projectService.getProjects(includeArchived),
         this.projectService.getTags(),
         this.loadMyInterests(),
         this.favoriteService.loadFavorites(),

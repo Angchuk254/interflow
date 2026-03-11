@@ -8,8 +8,8 @@ import type { Project, InterestRequest, Tag } from '../interfaces/database.types
 export class ProjectService {
   private readonly api = inject(Api);
 
-  async getProjects(): Promise<Project[]> {
-    const { data, error } = await this.api.supabase
+  async getProjects(includeArchived = false): Promise<Project[]> {
+    let query = this.api.supabase
       .from('projects')
       .select(`
         *,
@@ -20,18 +20,28 @@ export class ProjectService {
       .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
+    if (!includeArchived) {
+      query = query.is('archived_at', null);
+    }
+
+    const { data, error } = await query;
     if (error) throw error;
     return this.mapProjects(data || []);
   }
 
-  async getProjectById(id: string): Promise<Project | null> {
-    // First get basic project info
-    const { data: projectData, error: projectError } = await this.api.supabase
+  async getProjectById(id: string, includeArchived = false): Promise<Project | null> {
+    // First get basic project info (allow archived for admin)
+    let query = this.api.supabase
       .from('projects')
       .select('*')
       .eq('id', id)
-      .is('deleted_at', null)
-      .maybeSingle();
+      .is('deleted_at', null);
+
+    if (!includeArchived) {
+      query = query.is('archived_at', null);
+    }
+
+    const { data: projectData, error: projectError } = await query.maybeSingle();
 
     if (projectError) {
       console.error('Error fetching project:', projectError);
@@ -133,6 +143,24 @@ export class ProjectService {
 
     if (error) throw error;
     return data as Project;
+  }
+
+  async archiveProject(id: string): Promise<void> {
+    const { error } = await this.api.supabase
+      .from('projects')
+      .update({ archived_at: new Date().toISOString() })
+      .eq('id', id);
+
+    if (error) throw error;
+  }
+
+  async unarchiveProject(id: string): Promise<void> {
+    const { error } = await this.api.supabase
+      .from('projects')
+      .update({ archived_at: null })
+      .eq('id', id);
+
+    if (error) throw error;
   }
 
   async deleteProject(id: string): Promise<void> {
