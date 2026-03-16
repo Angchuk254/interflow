@@ -82,7 +82,7 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const appUrl = Deno.env.get("APP_URL") || "https://your-app.vercel.app";
+    const appUrl = Deno.env.get("APP_URL") || "https://inter-flow.vercel.app";
     const fullLink = record.link
       ? (record.link.startsWith("http") ? record.link : `${appUrl.replace(/\/$/, "")}${record.link.startsWith("/") ? record.link : "/" + record.link}`)
       : null;
