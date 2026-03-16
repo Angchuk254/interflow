@@ -197,11 +197,11 @@
               <h3 class="card__title"><i class="bi bi-calendar3 me-2"></i>Timeline</h3>
               <div class="info-row">
                 <span class="info-row__label">Start Date</span>
-                <span class="info-row__value">{{ formatDate(project()!.start_date) }}</span>
+                <span class="info-row__value">{{ formatDate(project()?.start_date) }}</span>
               </div>
               <div class="info-row">
                 <span class="info-row__label">Expected End</span>
-                <span class="info-row__value">{{ formatDate(project()!.expected_end_date) }}</span>
+                <span class="info-row__value">{{ formatDate(project()?.expected_end_date) }}</span>
               </div>
               <div class="info-row">
                 <span class="info-row__label">Created</span>

@@ -171,8 +171,11 @@ export class Projects implements OnInit {
     return map[priority] || 'secondary';
   }
 
-  formatDate(date: string): string {
-    return new Date(date).toLocaleDateString('en-US', {
+  formatDate(date: string | null | undefined): string {
+    if (!date) return '—';
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',

@@ -187,14 +187,13 @@
     overflow: hidden;
   }
 
-  &__meta {
-    flex-shrink: 0;
-  }
-
   &__dates {
-    font-size: 0.8125rem;
-    color: #64748b;
-    white-space: nowrap;
+    font-size: 0.875rem;
+    color: #475569;
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
   }
 
   &__tags {

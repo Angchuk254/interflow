@@ -93,11 +93,9 @@
               <a [routerLink]="['/projects', project.id]">{{ project.title }}</a>
             </h3>
             <p class="project-card__brief">{{ project.brief }}</p>
-          </div>
-          <div class="project-card__meta">
             <div class="project-card__dates">
               <span><i class="bi bi-calendar me-1"></i> {{ formatDate(project.start_date) }}</span>
-              <span class="mx-2">-</span>
+              <span class="mx-2">–</span>
               <span>{{ formatDate(project.expected_end_date) }}</span>
             </div>
           </div>
