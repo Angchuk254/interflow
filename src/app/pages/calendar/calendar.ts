@@ -4,6 +4,7 @@ import { Api } from '../../services/api';
 import { TaskService } from '../../services/task.service';
 import { ProjectService } from '../../services/project.service';
 import { toLocalDateString } from '../../utils/date';
+import { getCalendarPriorityClass } from '../../constants/calendar-colors';
 import type { Task, Project } from '../../interfaces/database.types';
 
 export type ViewMode = 'month' | 'week' | 'agenda';
@@ -235,6 +236,7 @@ export class Calendar implements OnInit {
         this.tasks.set(tasks);
         this.projects.set(projects);
       } else {
+        // user, it_manager
         const [tasks, projects] = await Promise.all([
           this.taskService.getMyTasks(),
           this.projectService.getMyProjects(),
@@ -296,7 +298,7 @@ export class Calendar implements OnInit {
   }
 
   getPriorityClass(priority: string): string {
-    return { high: 'danger', medium: 'warning', low: 'secondary' }[priority] || 'secondary';
+    return getCalendarPriorityClass(priority);
   }
 
   getStatusClass(status: string): string {

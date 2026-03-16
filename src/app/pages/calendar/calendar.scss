@@ -1,6 +1,12 @@
+/* Shared dot colors - used by events, legend, and upcoming sidebar */
 .calendar-page {
   max-width: 1400px;
   margin: 0 auto;
+
+  .dot--danger { background-color: #dc3545 !important; }
+  .dot--warning { background-color: #ffc107 !important; }
+  .dot--secondary { background-color: #6c757d !important; }
+  .dot--info { background-color: #0dcaf0 !important; }
 }
 
 .page__header {
@@ -304,22 +310,59 @@
 .legend {
   display: flex;
   justify-content: center;
-  gap: 1.5rem;
+  gap: 2rem;
   margin-top: 1.25rem;
   flex-wrap: wrap;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+
+  &__group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  &__group-title {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #94a3b8;
+  }
+
+  &__items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 1.5rem;
+  }
 
   &__item {
     display: flex;
     align-items: center;
     gap: 0.5rem;
     font-size: 0.8125rem;
-    color: #64748b;
+    color: #475569;
   }
 
   &__dot {
-    width: 10px;
-    height: 10px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  &__bar {
+    width: 3px;
+    height: 14px;
+    border-radius: 2px;
+    flex-shrink: 0;
+
+    &--task-start { background-color: var(--secondary) !important; }
+    &--task-due { background-color: var(--primary) !important; }
+    &--project-start { background-color: #8b5cf6 !important; }
+    &--project-due { background-color: #0ea5e9 !important; }
   }
 }
 
@@ -355,8 +398,9 @@
 
 .upcoming__item {
   display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
   padding: 0.75rem;
   border-radius: 8px;
   text-decoration: none;
@@ -369,6 +413,13 @@
     background: rgba(var(--primary-rgb), 0.06);
     border-color: rgba(var(--primary-rgb), 0.2);
   }
+}
+
+.upcoming__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .upcoming__date {

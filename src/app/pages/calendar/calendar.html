@@ -98,7 +98,7 @@
                   <div class="calendar__events">
                     @for (event of day.events.slice(0, viewMode() === 'agenda' ? 99 : (viewMode() === 'week' ? 8 : 2)); track event.id) {
                       <div class="event event--{{ event.type }}" [class.event--task]="event.type.startsWith('task')" [class.event--project]="event.type.startsWith('project')">
-                        <span class="event__dot bg-{{ event.priority ? getPriorityClass(event.priority) : 'info' }}"></span>
+                        <span class="event__dot dot--{{ event.priority ? getPriorityClass(event.priority) : 'info' }}"></span>
                         @if (viewMode() === 'week' || viewMode() === 'agenda') {
                           <span class="event__label">{{ getEventLabel(event) }}</span>
                         }
@@ -116,17 +116,39 @@
         </div>
 
         <div class="legend">
-          <div class="legend__item">
-            <span class="legend__dot bg-danger"></span> High Priority
+          <div class="legend__group">
+            <span class="legend__group-title">Priority (dot color)</span>
+            <div class="legend__items">
+              <div class="legend__item">
+                <span class="legend__dot dot--danger"></span> High
+              </div>
+              <div class="legend__item">
+                <span class="legend__dot dot--warning"></span> Medium
+              </div>
+              <div class="legend__item">
+                <span class="legend__dot dot--secondary"></span> Low
+              </div>
+              <div class="legend__item">
+                <span class="legend__dot dot--info"></span> Project
+              </div>
+            </div>
           </div>
-          <div class="legend__item">
-            <span class="legend__dot bg-warning"></span> Medium
-          </div>
-          <div class="legend__item">
-            <span class="legend__dot bg-secondary"></span> Low
-          </div>
-          <div class="legend__item">
-            <span class="legend__dot bg-info"></span> Project
+          <div class="legend__group">
+            <span class="legend__group-title">Event type (border)</span>
+            <div class="legend__items">
+              <div class="legend__item">
+                <span class="legend__bar legend__bar--task-start"></span> Task Start
+              </div>
+              <div class="legend__item">
+                <span class="legend__bar legend__bar--task-due"></span> Task Due
+              </div>
+              <div class="legend__item">
+                <span class="legend__bar legend__bar--project-start"></span> Project Start
+              </div>
+              <div class="legend__item">
+                <span class="legend__bar legend__bar--project-due"></span> Project Due
+              </div>
+            </div>
           </div>
         </div>
       </main>
@@ -138,6 +160,7 @@
             @for (event of upcomingEvents(); track event.id) {
               <li>
                 <a [routerLink]="getEventRoute(event)" class="upcoming__item">
+                  <span class="upcoming__dot dot--{{ event.priority ? getPriorityClass(event.priority) : 'info' }}"></span>
                   <span class="upcoming__date">{{ event.dateObj.toLocaleDateString('default', { month: 'short', day: 'numeric' }) }}</span>
                   <span class="upcoming__label">{{ getEventLabel(event) }}</span>
                   <span class="upcoming__event-title">{{ event.title }}</span>
