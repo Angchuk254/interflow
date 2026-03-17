@@ -30,6 +30,7 @@ export class Projects implements OnInit {
   readonly selectedStatus = signal<string>('all');
   readonly selectedPriority = signal<string>('all');
   readonly myInterestProjectIds = signal<Set<string>>(new Set());
+  readonly myProjectIds = signal<Set<string>>(new Set());
 
   // Interest modal state
   readonly showInterestModal = signal(false);
@@ -73,17 +74,23 @@ export class Projects implements OnInit {
     this.selectedPriority.set('all');
   }
 
+  isContributor(projectId: string): boolean {
+    return this.myProjectIds().has(projectId);
+  }
+
   async ngOnInit(): Promise<void> {
     try {
       const includeArchived = this.api.isAdmin();
-      const [projects, tags] = await Promise.all([
+      const [projects, tags, myProjects] = await Promise.all([
         this.projectService.getProjects(includeArchived),
         this.projectService.getTags(),
+        this.projectService.getMyProjects(),
         this.loadMyInterests(),
         this.favoriteService.loadFavorites(),
       ]);
       this.projects.set(projects);
       this.tags.set(tags);
+      this.myProjectIds.set(new Set(myProjects.map((p) => p.id)));
     } finally {
       this.loading.set(false);
     }
@@ -106,7 +113,8 @@ export class Projects implements OnInit {
     const { data } = await this.api.supabase
       .from('interest_requests')
       .select('project_id')
-      .eq('user_id', userId);
+      .eq('user_id', userId)
+      .eq('status', 'pending');
 
     if (data) {
       this.myInterestProjectIds.set(new Set(data.map((d) => d.project_id)));

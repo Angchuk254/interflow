@@ -3,9 +3,10 @@ import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Api } from '../../services/api';
 import { TaskService } from '../../services/task.service';
+import { ProjectService } from '../../services/project.service';
 import { TimeTrackingService } from '../../services/time-tracking.service';
 import { SnackbarService } from '../../services/snackbar.service';
-import type { Task, TimeLog } from '../../interfaces/database.types';
+import type { Task, TimeLog, Project } from '../../interfaces/database.types';
 
 type TaskStatus = 'not_started' | 'in_progress' | 'completed';
 
@@ -26,11 +27,13 @@ interface Column {
 export class TaskBoard implements OnInit {
   readonly api = inject(Api);
   readonly taskService = inject(TaskService);
+  readonly projectService = inject(ProjectService);
   readonly timeTrackingService = inject(TimeTrackingService);
   readonly snackbar = inject(SnackbarService);
 
   readonly loading = signal(true);
   readonly tasks = signal<Task[]>([]);
+  readonly myProjects = signal<Project[]>([]);
   readonly draggedTask = signal<Task | null>(null);
   readonly myTimeLogs = signal<TimeLog[]>([]);
 
@@ -75,11 +78,13 @@ export class TaskBoard implements OnInit {
 
   async ngOnInit(): Promise<void> {
     try {
-      const [tasks, timeLogs] = await Promise.all([
+      const [tasks, projects, timeLogs] = await Promise.all([
         this.taskService.getMyTasks(),
+        this.projectService.getMyProjects(),
         this.timeTrackingService.getMyTimeLogs(),
       ]);
       this.tasks.set(tasks);
+      this.myProjects.set(projects);
       this.myTimeLogs.set(timeLogs);
     } finally {
       this.loading.set(false);

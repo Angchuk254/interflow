@@ -144,6 +144,11 @@
                       <i class="bi bi-person-check"></i>
                     </button>
                   }
+                  @if (api.isAdmin()) {
+                    <button class="btn btn-sm btn-outline-secondary" (click)="openResetPasswordModal(user)" title="Reset password">
+                      <i class="bi bi-key"></i>
+                    </button>
+                  }
                   @if (api.isAdmin() && user.id !== api.user()?.id) {
                     <button class="btn btn-sm btn-outline-danger" (click)="deleteUser(user)" title="Delete permanently">
                       <i class="bi bi-trash"></i>
@@ -346,6 +351,47 @@
             <span class="spinner-border spinner-border-sm me-2"></span>
           }
           Save Changes
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Reset Password Modal -->
+@if (showResetPasswordModal() && resetPasswordUser(); as user) {
+  <div class="modal-backdrop" (click)="closeResetPasswordModal()"></div>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-key me-2"></i> Reset Password
+        </h5>
+        <button type="button" class="btn-close" (click)="closeResetPasswordModal()"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted mb-3">
+          Set a new password for <strong>{{ user.full_name }}</strong> ({{ user.email }}). They can use it to log in immediately.
+        </p>
+        <div class="mb-3">
+          <label class="form-label">New Password</label>
+          <input
+            type="password"
+            class="form-control"
+            [(ngModel)]="resetPasswordNewPassword"
+            placeholder="Min 6 characters"
+            [disabled]="resetting()"
+          />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" (click)="closeResetPasswordModal()" [disabled]="resetting()">
+          Cancel
+        </button>
+        <button type="button" class="btn btn-primary" (click)="resetPassword()" [disabled]="resetting() || resetPasswordNewPassword.length < 6">
+          @if (resetting()) {
+            <span class="spinner-border spinner-border-sm me-2"></span>
+          }
+          Reset Password
         </button>
       </div>
     </div>

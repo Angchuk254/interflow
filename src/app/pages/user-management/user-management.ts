@@ -59,6 +59,12 @@ export class UserManagement implements OnInit {
     status: 'active' as 'invited' | 'active' | 'deactivated',
   };
 
+  // Reset Password Modal
+  readonly showResetPasswordModal = signal(false);
+  readonly resetPasswordUser = signal<Profile | null>(null);
+  resetPasswordNewPassword = '';
+  readonly resetting = signal(false);
+
   readonly filteredUsers = computed(() => {
     let result = this.users();
     const query = this.searchQuery().toLowerCase();
@@ -286,6 +292,43 @@ export class UserManagement implements OnInit {
       );
     } catch {
       this.snackbar.error('Failed to activate user');
+    }
+  }
+
+  openResetPasswordModal(user: Profile): void {
+    this.resetPasswordUser.set(user);
+    this.resetPasswordNewPassword = '';
+    this.showResetPasswordModal.set(true);
+  }
+
+  closeResetPasswordModal(): void {
+    this.showResetPasswordModal.set(false);
+    this.resetPasswordUser.set(null);
+    this.resetPasswordNewPassword = '';
+  }
+
+  async resetPassword(): Promise<void> {
+    const user = this.resetPasswordUser();
+    if (!user || !this.resetPasswordNewPassword.trim()) return;
+    if (this.resetPasswordNewPassword.length < 6) {
+      this.snackbar.error('Password must be at least 6 characters');
+      return;
+    }
+
+    this.resetting.set(true);
+    try {
+      const { data, error } = await this.api.supabase.functions.invoke('reset-password', {
+        body: { user_id: user.id, new_password: this.resetPasswordNewPassword.trim() },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      this.snackbar.success(`Password updated for ${user.email}. Use the new password to log in.`);
+      this.closeResetPasswordModal();
+    } catch (err) {
+      this.snackbar.error(err instanceof Error ? err.message : 'Failed to reset password');
+    } finally {
+      this.resetting.set(false);
     }
   }
 

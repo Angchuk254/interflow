@@ -51,6 +51,7 @@ export class EmployeeDashboard implements OnInit, AfterViewInit {
   readonly myTasks = signal<Task[]>([]);
   readonly myInterests = signal<InterestRequest[]>([]);
   readonly recommendedProjects = signal<Project[]>([]);
+  readonly myProjectIds = signal<Set<string>>(new Set());
   readonly favoriteProjects = signal<Project[]>([]);
   readonly mySkills = signal<UserSkill[]>([]);
   readonly notifications = signal<Notification[]>([]);
@@ -89,19 +90,26 @@ export class EmployeeDashboard implements OnInit, AfterViewInit {
     });
     this.upcomingDeadlines.set(upcoming.slice(0, 3));
 
-    // Load my interest requests
-    const { data: interests } = await this.api.supabase
-      .from('interest_requests')
-      .select(`*, project:projects(id, title, brief, status)`)
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
+    // Load my interest requests, my projects, and visible projects
+    const [{ data: interests }, myProjects, projects] = await Promise.all([
+      this.api.supabase
+        .from('interest_requests')
+        .select(`*, project:projects(id, title, brief, status)`)
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false }),
+      this.projectService.getMyProjects(),
+      this.projectService.getProjects(),
+    ]);
 
     this.myInterests.set((interests as InterestRequest[]) || []);
+    this.myProjectIds.set(new Set(myProjects.map((p) => p.id)));
 
-    // Load recommended projects (visible projects user hasn't shown interest in)
+    // Recommended projects: visible projects where user is NOT a contributor and has NOT submitted interest
     const interestProjectIds = new Set(interests?.map((i) => i.project_id) || []);
-    const projects = await this.projectService.getProjects();
-    const recommended = projects.filter((p) => !interestProjectIds.has(p.id)).slice(0, 4);
+    const contributorProjectIds = this.myProjectIds();
+    const recommended = projects
+      .filter((p) => !interestProjectIds.has(p.id) && !contributorProjectIds.has(p.id))
+      .slice(0, 4);
     this.recommendedProjects.set(recommended);
 
     // Load notifications
@@ -241,6 +249,10 @@ export class EmployeeDashboard implements OnInit, AfterViewInit {
     } catch {
       this.snackbar.error('Failed to submit interest');
     }
+  }
+
+  isContributor(projectId: string): boolean {
+    return this.myProjectIds().has(projectId);
   }
 
   getStatusClass(status: string): string {

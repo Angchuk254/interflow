@@ -92,7 +92,7 @@ export class ProjectService {
       .from('project_tags')
       .select('tag:tags(*)')
       .eq('project_id', id);
-
+console.log(tagsData);
     // Map contributors with join method info
     const interestMap = new Map(
       approvedInterests?.map((i: any) => [i.user_id, { reviewer: i.reviewer, reviewed_at: i.reviewed_at }]) || []
@@ -246,20 +246,31 @@ export class ProjectService {
   }
 
   async approveInterest(id: string, note?: string): Promise<void> {
-    const userId = this.api.user()?.id;
-    if (!userId) throw new Error('Not authenticated');
+    const reviewerId = this.api.user()?.id;
+    if (!reviewerId) throw new Error('Not authenticated');
+
+    const { data: interest, error: fetchError } = await this.api.supabase
+      .from('interest_requests')
+      .select('project_id, user_id')
+      .eq('id', id)
+      .single();
+
+    if (fetchError || !interest) throw new Error('Interest request not found');
 
     const { error } = await this.api.supabase
       .from('interest_requests')
       .update({
         status: 'approved',
-        reviewed_by: userId,
+        reviewed_by: reviewerId,
         review_note: note,
         reviewed_at: new Date().toISOString(),
       })
       .eq('id', id);
 
     if (error) throw error;
+
+    // Add user to project_contributors so project shows in My Projects, Task Board, etc.
+    await this.addProjectContributor(interest.project_id, interest.user_id);
   }
 
   async rejectInterest(id: string, note?: string): Promise<void> {
@@ -281,15 +292,23 @@ export class ProjectService {
 
   /** Bulk approve multiple interest requests. */
   async bulkApproveInterest(ids: string[], note?: string): Promise<void> {
-    const userId = this.api.user()?.id;
-    if (!userId) throw new Error('Not authenticated');
+    const reviewerId = this.api.user()?.id;
+    if (!reviewerId) throw new Error('Not authenticated');
     if (!ids.length) return;
+
+    const { data: interests, error: fetchError } = await this.api.supabase
+      .from('interest_requests')
+      .select('id, project_id, user_id')
+      .in('id', ids)
+      .eq('status', 'pending');
+
+    if (fetchError || !interests?.length) return;
 
     const { error } = await this.api.supabase
       .from('interest_requests')
       .update({
         status: 'approved',
-        reviewed_by: userId,
+        reviewed_by: reviewerId,
         review_note: note,
         reviewed_at: new Date().toISOString(),
       })
@@ -297,6 +316,11 @@ export class ProjectService {
       .eq('status', 'pending');
 
     if (error) throw error;
+
+    // Add each user to project_contributors so projects show in My Projects, Task Board, etc.
+    for (const i of interests) {
+      await this.addProjectContributor(i.project_id, i.user_id);
+    }
   }
 
   /** Bulk reject multiple interest requests. */
@@ -447,7 +471,7 @@ export class ProjectService {
 
   async addProjectTags(projectId: string, tagIds: string[]): Promise<void> {
     if (tagIds.length === 0) return;
-    
+
     const inserts = tagIds.map((tagId) => ({
       project_id: projectId,
       tag_id: tagId,
@@ -473,7 +497,7 @@ export class ProjectService {
 
   async addProjectManagers(projectId: string, userIds: string[]): Promise<void> {
     if (userIds.length === 0) return;
-    
+
     const inserts = userIds.map((userId) => ({
       project_id: projectId,
       user_id: userId,
@@ -501,14 +525,17 @@ export class ProjectService {
     const approvedBy = this.api.user()?.id;
     const { error } = await this.api.supabase
       .from('project_contributors')
-      .insert({ 
-        project_id: projectId, 
+      .insert({
+        project_id: projectId,
         user_id: userId,
         approved_by: approvedBy,
         approved_at: new Date().toISOString(),
       });
 
-    if (error) throw error;
+    if (error) {
+      if ((error as { code?: string }).code === '23505') return; // duplicate, already contributor
+      throw error;
+    }
   }
 
   async updateProjectContributors(projectId: string, userIds: string[]): Promise<void> {

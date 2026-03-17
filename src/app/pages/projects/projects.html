@@ -124,7 +124,11 @@
           <div class="project-card__footer-wrap">
             <div class="project-card__footer">
               @if (isUser()) {
-                @if (hasSubmittedInterest(project.id)) {
+                @if (isContributor(project.id)) {
+                  <a [routerLink]="['/projects', project.id]" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-eye me-1"></i> View Details
+                  </a>
+                } @else if (hasSubmittedInterest(project.id)) {
                   <span class="interest-badge">
                     <i class="bi bi-check-circle-fill me-1"></i> Interest Submitted
                   </span>

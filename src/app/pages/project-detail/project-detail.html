@@ -265,9 +265,16 @@
             </div>
 
             @if (api.isUser() && !isContributor()) {
-              <button class="btn btn-primary w-100" (click)="showInterest()">
-                <i class="bi bi-hand-index me-2"></i> Show Interest
-              </button>
+              @if (hasSubmittedInterest()) {
+                <div class="alert alert-warning mb-0">
+                  <strong>Interest pending approval.</strong>
+                  <span class="d-block small text-muted">A manager or admin will review your request.</span>
+                </div>
+              } @else {
+                <button class="btn btn-primary w-100" (click)="showInterest()">
+                  <i class="bi bi-hand-index me-2"></i> Show Interest
+                </button>
+              }
             }
           </div>
         </div>
@@ -469,18 +476,21 @@
               </button>
             </div>
           } @else {
-            <div class="comment-restriction">
-              <div class="restriction-tooltip">
-                <i class="bi bi-lock-fill me-2"></i>
-                <div>
+            <div class="comment-restriction d-flex align-items-center">
+              <i class="bi bi-lock-fill me-2"></i>
+              <div>
+                @if (api.isUser() && !isContributor() && hasSubmittedInterest()) {
+                  <strong>Interest pending approval</strong>
+                  <p class="mb-0">A manager or admin must approve your request before you can comment.</p>
+                } @else {
                   <strong>You need to join this project to comment</strong>
-                  <p>Show your interest and get approved to participate in discussions.</p>
+                  <p class="mb-0">Show your interest and get approved to participate in discussions.</p>
                   @if (api.isUser() && !isContributor()) {
-                    <button class="btn btn-sm btn-primary" (click)="showInterest()">
+                    <button class="btn btn-sm btn-primary mt-2" (click)="showInterest()">
                       <i class="bi bi-hand-index me-1"></i> Show Interest
                     </button>
                   }
-                </div>
+                }
               </div>
             </div>
           }
@@ -528,7 +538,7 @@
             }
           </h3>
           
-          @if (interests().length === 0) {
+          @if (displayInterests().length === 0) {
             <div class="empty-box">
               <i class="bi bi-inbox"></i>
               <h4>No interest requests</h4>
@@ -536,7 +546,7 @@
             </div>
           } @else {
             <div class="interest-list">
-              @for (interest of interests(); track interest.id) {
+            @for (interest of displayInterests(); track interest.id) {
                 <div class="interest-item" [class.interest-item--pending]="interest.status === 'pending'" [class.interest-item--approved]="interest.status === 'approved'" [class.interest-item--rejected]="interest.status === 'rejected'">
                   <div class="interest-item__user">
                     <span class="avatar">{{ getInitials(interest.user?.full_name || '') }}</span>

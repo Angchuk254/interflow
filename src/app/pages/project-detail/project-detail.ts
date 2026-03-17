@@ -36,6 +36,7 @@ export class ProjectDetail implements OnInit {
   readonly interests = signal<InterestRequest[]>([]);
   readonly comments = signal<ProjectComment[]>([]);
   readonly timeLogs = signal<TimeLog[]>([]);
+  readonly hasSubmittedInterest = signal(false);
   
   readonly activeTab = signal<'overview' | 'tasks' | 'team' | 'comments' | 'interests' | 'time'>('overview');
   readonly showAdminMenu = signal(false);
@@ -74,6 +75,22 @@ export class ProjectDetail implements OnInit {
     return this.interests().filter((i) => i.status === 'pending');
   });
 
+  /** Only show interests that actually came from the "Show Interest" flow, plus any pending requests. */
+  readonly displayInterests = computed(() => {
+    const project = this.project();
+    const contributors = (project?.contributors || []) as (Profile & { joinedViaInterest?: boolean })[];
+    const joinedViaInterestIds = new Set(
+      contributors.filter((c) => c.joinedViaInterest).map((c) => c.id)
+    );
+
+    return this.interests().filter((i) => {
+      // Always show pending requests (they come from "Show Interest")
+      if (i.status === 'pending') return true;
+      // For approved/rejected, only show if this user actually joined via interest
+      return joinedViaInterestIds.has(i.user_id);
+    });
+  });
+
   readonly canComment = computed(() => {
     if (this.api.isAdmin() || this.api.isManager()) return true;
     return this.isContributor();
@@ -107,6 +124,23 @@ export class ProjectDetail implements OnInit {
       this.project.set(project);
       this.tasks.set(tasks);
       this.comments.set(comments);
+
+      // For regular users, check if they already submitted interest for this project
+      if (this.api.isUser() && project) {
+        const userId = this.api.user()?.id;
+        if (userId) {
+          const { data } = await this.api.supabase
+            .from('interest_requests')
+            .select('id')
+            .eq('project_id', project.id)
+            .eq('user_id', userId)
+            .limit(1)
+            .maybeSingle();
+          if (data) {
+            this.hasSubmittedInterest.set(true);
+          }
+        }
+      }
 
       // Load interests if manager/admin
       if (this.api.isAdmin() || this.api.isManager()) {
@@ -218,12 +252,17 @@ export class ProjectDetail implements OnInit {
     const project = this.project();
     if (!project) return;
 
-    const message = prompt('Why are you interested in this project? (optional)');
     try {
-      await this.projectService.showInterest(project.id, message || undefined);
+      await this.projectService.showInterest(project.id, undefined);
+      this.hasSubmittedInterest.set(true);
       this.snackbar.success('Interest submitted successfully! You will be notified when reviewed.');
-    } catch {
-      this.snackbar.error('Failed to submit interest');
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : (err as { message?: string })?.message ?? 'Unknown error';
+      console.error('Show interest failed:', err);
+      this.snackbar.error(`Failed to submit interest: ${msg}`);
     }
   }
 
