@@ -29,6 +29,7 @@ export class Projects implements OnInit {
   readonly searchQuery = signal('');
   readonly selectedStatus = signal<string>('all');
   readonly selectedPriority = signal<string>('all');
+  readonly selectedTag = signal<string>('all');
   readonly myInterestProjectIds = signal<Set<string>>(new Set());
   readonly myProjectIds = signal<Set<string>>(new Set());
 
@@ -46,6 +47,7 @@ export class Projects implements OnInit {
     const query = this.searchQuery().toLowerCase();
     const status = this.selectedStatus();
     const priority = this.selectedPriority();
+    const tagId = this.selectedTag();
 
     if (query) {
       result = result.filter(
@@ -58,6 +60,9 @@ export class Projects implements OnInit {
     if (priority !== 'all') {
       result = result.filter((p) => p.priority === priority);
     }
+    if (tagId !== 'all') {
+      result = result.filter((p) => p.tags?.some((t) => t.id === tagId));
+    }
     return result;
   });
 
@@ -65,13 +70,15 @@ export class Projects implements OnInit {
     () =>
       this.searchQuery().trim() !== '' ||
       this.selectedStatus() !== 'all' ||
-      this.selectedPriority() !== 'all'
+      this.selectedPriority() !== 'all' ||
+      this.selectedTag() !== 'all'
   );
 
   resetFilters(): void {
     this.searchQuery.set('');
     this.selectedStatus.set('all');
     this.selectedPriority.set('all');
+    this.selectedTag.set('all');
   }
 
   isContributor(projectId: string): boolean {

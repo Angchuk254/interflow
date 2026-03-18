@@ -95,12 +95,20 @@
                     <i class="bi bi-lock login-field__icon"></i>
                     <input
                       id="password"
-                      type="password"
+                      [type]="passwordVisible() ? 'text' : 'password'"
                       formControlName="password"
                       autocomplete="current-password"
                       placeholder="Enter your password"
                       class="login-field__input"
                     />
+                    <button
+                      type="button"
+                      class="login-field__toggle"
+                      (click)="togglePasswordVisibility()"
+                      [attr.aria-label]="passwordVisible() ? 'Hide password' : 'Show password'"
+                    >
+                      <i class="bi" [class.bi-eye]="!passwordVisible()" [class.bi-eye-slash]="passwordVisible()"></i>
+                    </button>
                   </div>
                   @if (showError('password')) {
                     <span class="login-field__error">Password is required</span>

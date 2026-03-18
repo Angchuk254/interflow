@@ -49,6 +49,12 @@
       <option value="medium">Medium</option>
       <option value="low">Low</option>
     </select>
+    <select class="form-select filters__select" [ngModel]="selectedTag()" (ngModelChange)="selectedTag.set($event)">
+      <option value="all">All Tags</option>
+      @for (tag of tags(); track tag.id) {
+        <option [ngValue]="tag.id">{{ tag.name }}</option>
+      }
+    </select>
   </div>
 
   @if (loading()) {
@@ -126,7 +132,7 @@
               @if (isUser()) {
                 @if (isContributor(project.id)) {
                   <a [routerLink]="['/projects', project.id]" class="btn btn-sm btn-outline-primary">
-                    <i class="bi bi-eye me-1"></i> View Details
+                    <i class="bi bi-eye me-1"></i> View Project
                   </a>
                 } @else if (hasSubmittedInterest(project.id)) {
                   <span class="interest-badge">

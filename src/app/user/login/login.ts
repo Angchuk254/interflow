@@ -15,6 +15,7 @@ export class Login implements OnInit, OnDestroy {
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required]],
   });
+  protected readonly passwordVisible = signal(false);
   protected readonly carouselImages = [
     'https://images.unsplash.com/photo-1497032628192-86f99bcd76bc?w=1200&q=80',
     'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&q=80',
@@ -88,6 +89,10 @@ export class Login implements OnInit, OnDestroy {
 
   protected setActiveSlide(index: number): void {
     this.activeSlide.set(index);
+  }
+
+  protected togglePasswordVisibility(): void {
+    this.passwordVisible.update((v) => !v);
   }
 
   protected nextSlide(): void {
