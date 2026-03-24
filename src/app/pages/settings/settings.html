@@ -76,6 +76,113 @@
     </div>
   </div>
 
+  <div class="settings-section">
+    <h2 class="settings-section__title">
+      <i class="bi bi-key me-2"></i> Password
+    </h2>
+    <div class="settings-section__body">
+      <div class="setting-item setting-item--stack">
+        <div class="setting-item__info">
+          <strong>Reset your password</strong>
+          <span>Available for all roles (Admin, Manager, IT Manager, Employee).</span>
+        </div>
+        <form class="password-form" (ngSubmit)="updateMyPassword()">
+          <!-- Hidden username field improves password-manager and accessibility support -->
+          <input
+            type="text"
+            class="visually-hidden"
+            tabindex="-1"
+            aria-hidden="true"
+            [value]="api.user()?.email || ''"
+            autocomplete="username"
+            readonly
+          />
+          <div class="input-group">
+            <input
+              [type]="showCurrentPassword() ? 'text' : 'password'"
+              class="form-control"
+              placeholder="Current password"
+              [(ngModel)]="passwordForm.currentPassword"
+              (ngModelChange)="onPasswordInput()"
+              name="currentPassword"
+              autocomplete="current-password"
+              [disabled]="updatingPassword()"
+            />
+            <button
+              type="button"
+              class="btn btn-outline-secondary password-eye-btn"
+              [disabled]="updatingPassword()"
+              (click)="togglePasswordVisibility('current')"
+              [attr.aria-label]="showCurrentPassword() ? 'Hide current password' : 'Show current password'"
+            >
+              <i class="bi" [class.bi-eye]="!showCurrentPassword()" [class.bi-eye-slash]="showCurrentPassword()"></i>
+            </button>
+          </div>
+          <div class="input-group">
+            <input
+              [type]="showNewPassword() ? 'text' : 'password'"
+              class="form-control"
+              placeholder="New password (min 8 chars)"
+              [(ngModel)]="passwordForm.newPassword"
+              (ngModelChange)="onPasswordInput()"
+              name="newPassword"
+              autocomplete="new-password"
+              [disabled]="updatingPassword()"
+            />
+            <button
+              type="button"
+              class="btn btn-outline-secondary password-eye-btn"
+              [disabled]="updatingPassword()"
+              (click)="togglePasswordVisibility('new')"
+              [attr.aria-label]="showNewPassword() ? 'Hide new password' : 'Show new password'"
+            >
+              <i class="bi" [class.bi-eye]="!showNewPassword()" [class.bi-eye-slash]="showNewPassword()"></i>
+            </button>
+          </div>
+          <div class="input-group">
+            <input
+              [type]="showConfirmPassword() ? 'text' : 'password'"
+              class="form-control"
+              placeholder="Confirm new password"
+              [(ngModel)]="passwordForm.confirmPassword"
+              (ngModelChange)="onPasswordInput()"
+              name="confirmPassword"
+              autocomplete="new-password"
+              [disabled]="updatingPassword()"
+            />
+            <button
+              type="button"
+              class="btn btn-outline-secondary password-eye-btn"
+              [disabled]="updatingPassword()"
+              (click)="togglePasswordVisibility('confirm')"
+              [attr.aria-label]="showConfirmPassword() ? 'Hide confirm password' : 'Show confirm password'"
+            >
+              <i class="bi" [class.bi-eye]="!showConfirmPassword()" [class.bi-eye-slash]="showConfirmPassword()"></i>
+            </button>
+          </div>
+          <span
+            [matTooltip]="shouldShowPasswordValidationError() ? getPasswordValidationError() : ''"
+            [matTooltipDisabled]="!shouldShowPasswordValidationError()"
+          >
+            <button
+              type="submit"
+              class="btn btn-primary"
+              [disabled]="updatingPassword() || !!getPasswordValidationError()"
+            >
+              @if (updatingPassword()) {
+                <span class="spinner-border spinner-border-sm me-2"></span>
+              }
+              Update Password
+            </button>
+          </span>
+          @if (shouldShowPasswordValidationError()) {
+            <small class="text-danger">{{ getPasswordValidationError() }}</small>
+          }
+        </form>
+      </div>
+    </div>
+  </div>
+
   @if (api.isAdmin()) {
     <div class="settings-section">
       <h2 class="settings-section__title">

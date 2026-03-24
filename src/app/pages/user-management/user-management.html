@@ -378,7 +378,7 @@
             type="password"
             class="form-control"
             [(ngModel)]="resetPasswordNewPassword"
-            placeholder="Min 6 characters"
+            placeholder="Min 8 characters"
             [disabled]="resetting()"
           />
         </div>
@@ -387,7 +387,7 @@
         <button type="button" class="btn btn-outline-secondary" (click)="closeResetPasswordModal()" [disabled]="resetting()">
           Cancel
         </button>
-        <button type="button" class="btn btn-primary" (click)="resetPassword()" [disabled]="resetting() || resetPasswordNewPassword.length < 6">
+        <button type="button" class="btn btn-primary" (click)="resetPassword()" [disabled]="resetting() || resetPasswordNewPassword.length < 8">
           @if (resetting()) {
             <span class="spinner-border spinner-border-sm me-2"></span>
           }

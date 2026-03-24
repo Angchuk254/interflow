@@ -88,6 +88,16 @@ Deno.serve(async (req: Request) => {
     });
 
     if (inviteError) {
+      const raw = (inviteError.message || "").toLowerCase();
+      if (raw.includes("rate limit") || raw.includes("too many")) {
+        return new Response(
+          JSON.stringify({
+            error:
+              "Email sending limit reached. Please wait a few minutes before sending another invite.",
+          }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
       return new Response(
         JSON.stringify({ error: inviteError.message }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }

@@ -221,7 +221,13 @@ export class UserManagement implements OnInit {
       }, 2000);
 
     } catch (err) {
-      this.inviteError.set(err instanceof Error ? err.message : 'Failed to send invitation');
+      const raw = err instanceof Error ? err.message : 'Failed to send invitation';
+      const lower = raw.toLowerCase();
+      if (lower.includes('rate limit') || lower.includes('too many')) {
+        this.inviteError.set('Invite email rate limit reached. Please wait 2-5 minutes, then try again.');
+      } else {
+        this.inviteError.set(raw);
+      }
     } finally {
       this.inviting.set(false);
     }
@@ -310,8 +316,8 @@ export class UserManagement implements OnInit {
   async resetPassword(): Promise<void> {
     const user = this.resetPasswordUser();
     if (!user || !this.resetPasswordNewPassword.trim()) return;
-    if (this.resetPasswordNewPassword.length < 6) {
-      this.snackbar.error('Password must be at least 6 characters');
+    if (this.resetPasswordNewPassword.length < 8) {
+      this.snackbar.error('Password must be at least 8 characters');
       return;
     }
 
@@ -320,7 +326,18 @@ export class UserManagement implements OnInit {
       const { data, error } = await this.api.supabase.functions.invoke('reset-password', {
         body: { user_id: user.id, new_password: this.resetPasswordNewPassword.trim() },
       });
-      if (error) throw error;
+      if (error) {
+        let msg = error instanceof Error ? error.message : 'Failed to reset password';
+        if (error instanceof FunctionsHttpError && error.context) {
+          try {
+            const body = await error.context.json();
+            if (body?.error) msg = body.error;
+          } catch {
+            // fallback to default msg
+          }
+        }
+        throw new Error(msg);
+      }
       if (data?.error) throw new Error(data.error);
 
       this.snackbar.success(`Password updated for ${user.email}. Use the new password to log in.`);

@@ -69,6 +69,12 @@
       color: #64748b;
     }
   }
+
+  &--stack {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
 }
 
 .form-check-input {
@@ -89,6 +95,16 @@
 
 .settings-actions {
   padding-top: 1rem;
+}
+
+.password-form {
+  width: 100%;
+  display: grid;
+  gap: 0.625rem;
+}
+
+.password-eye-btn {
+  min-width: 2.75rem;
 }
 
 .alert {
