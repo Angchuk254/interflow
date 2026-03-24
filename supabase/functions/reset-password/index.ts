@@ -16,7 +16,9 @@ Deno.serve(async (req: Request) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    const authHeader = req.headers.get("Authorization");
+    const requestBody = await req.json();
+    const bodyToken = requestBody?.access_token ? String(requestBody.access_token) : null;
+    const authHeader = req.headers.get("Authorization") || (bodyToken ? `Bearer ${bodyToken}` : null);
     if (!authHeader) {
       return new Response(
         JSON.stringify({ error: "Missing authorization header" }),
@@ -45,7 +47,7 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const { user_id: targetUserId, new_password: newPassword } = await req.json();
+    const { user_id: targetUserId, new_password: newPassword } = requestBody;
     if (!targetUserId || !newPassword) {
       return new Response(
         JSON.stringify({ error: "user_id and new_password are required" }),

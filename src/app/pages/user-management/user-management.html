@@ -372,16 +372,29 @@
         <p class="text-muted mb-3">
           Set a new password for <strong>{{ user.full_name }}</strong> ({{ user.email }}). They can use it to log in immediately.
         </p>
-        <div class="mb-3">
-          <label class="form-label">New Password</label>
+        <form (ngSubmit)="resetPassword()">
           <input
-            type="password"
-            class="form-control"
-            [(ngModel)]="resetPasswordNewPassword"
-            placeholder="Min 8 characters"
-            [disabled]="resetting()"
+            type="text"
+            class="visually-hidden"
+            tabindex="-1"
+            aria-hidden="true"
+            [value]="user.email"
+            autocomplete="username"
+            readonly
           />
-        </div>
+          <div class="mb-3">
+            <label class="form-label">New Password</label>
+            <input
+              type="password"
+              class="form-control"
+              [(ngModel)]="resetPasswordNewPassword"
+              name="resetPasswordNewPassword"
+              autocomplete="new-password"
+              placeholder="Min 8 characters"
+              [disabled]="resetting()"
+            />
+          </div>
+        </form>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline-secondary" (click)="closeResetPasswordModal()" [disabled]="resetting()">

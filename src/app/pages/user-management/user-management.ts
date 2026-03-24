@@ -323,8 +323,24 @@ export class UserManagement implements OnInit {
 
     this.resetting.set(true);
     try {
+      await this.api.supabase.auth.refreshSession();
+      const {
+        data: { session },
+      } = await this.api.supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) {
+        throw new Error('No active admin session found. Please log in again.');
+      }
+
       const { data, error } = await this.api.supabase.functions.invoke('reset-password', {
-        body: { user_id: user.id, new_password: this.resetPasswordNewPassword.trim() },
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: {
+          user_id: user.id,
+          new_password: this.resetPasswordNewPassword.trim(),
+          access_token: accessToken,
+        },
       });
       if (error) {
         let msg = error instanceof Error ? error.message : 'Failed to reset password';
@@ -343,7 +359,18 @@ export class UserManagement implements OnInit {
       this.snackbar.success(`Password updated for ${user.email}. Use the new password to log in.`);
       this.closeResetPasswordModal();
     } catch (err) {
-      this.snackbar.error(err instanceof Error ? err.message : 'Failed to reset password');
+      const raw = err instanceof Error ? err.message : 'Failed to reset password';
+      const lower = raw.toLowerCase();
+      if (
+        lower.includes('non-2xx') ||
+        lower.includes('invalid token') ||
+        lower.includes('missing authorization') ||
+        lower.includes('401')
+      ) {
+        this.snackbar.error('Session expired. Please log in again as admin, then retry password reset.');
+      } else {
+        this.snackbar.error(raw);
+      }
     } finally {
       this.resetting.set(false);
     }
