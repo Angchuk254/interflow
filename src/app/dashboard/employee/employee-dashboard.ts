@@ -1,4 +1,13 @@
-import { Component, OnInit, AfterViewInit, inject, signal, ViewChild, ElementRef } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  AfterViewInit,
+  inject,
+  signal,
+  ViewChild,
+  ElementRef,
+  ChangeDetectorRef,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Chart, registerables } from 'chart.js';
 import { Api } from '../../services/api';
@@ -32,6 +41,7 @@ export class EmployeeDashboard implements OnInit, AfterViewInit {
   readonly timeTrackingService = inject(TimeTrackingService);
   readonly skillService = inject(SkillService);
   readonly snackbar = inject(SnackbarService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly loading = signal(true);
 
@@ -65,12 +75,23 @@ export class EmployeeDashboard implements OnInit, AfterViewInit {
       await this.loadDashboardData();
     } finally {
       this.loading.set(false);
-      // Charts are inside @if (!loading()) - wait for DOM to render
-      setTimeout(() => this.renderCharts(), 150);
+      this.cdr.detectChanges();
+      this.scheduleChartRender();
     }
   }
 
   ngAfterViewInit(): void {}
+
+  private scheduleChartRender(retries = 0): void {
+    const ready = this.taskChartRef?.nativeElement && this.hoursChartRef?.nativeElement;
+    if (ready) {
+      this.renderCharts();
+      return;
+    }
+    if (retries < 30) {
+      requestAnimationFrame(() => this.scheduleChartRender(retries + 1));
+    }
+  }
 
   private async loadDashboardData(): Promise<void> {
     const userId = this.api.user()?.id;

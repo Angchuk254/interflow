@@ -235,6 +235,9 @@ export class Calendar implements OnInit {
         ]);
         this.tasks.set(tasks);
         this.projects.set(projects);
+      } else if (role === 'finance') {
+        this.tasks.set([]);
+        this.projects.set([]);
       } else {
         // user, it_manager
         const [tasks, projects] = await Promise.all([

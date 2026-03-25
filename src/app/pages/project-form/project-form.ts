@@ -221,7 +221,8 @@ export class ProjectForm implements OnInit {
             'project',
             `You've been invited to "${this.form.title}"`,
             'You have been invited to work on this project.',
-            `/projects/${projectId}`
+            `/projects/${projectId}`,
+            { projectId },
           );
         }
 
@@ -231,7 +232,8 @@ export class ProjectForm implements OnInit {
           `New Project: ${this.form.title}`,
           this.form.brief,
           `/projects/${projectId}`,
-          currentUserId
+          currentUserId,
+          { projectId },
         );
       }
 

@@ -396,12 +396,24 @@ export class UserManagement implements OnInit {
   }
 
   getRoleLabel(role: string): string {
-    const map: Record<string, string> = { admin: 'Admin', manager: 'Manager', it_manager: 'IT Manager', user: 'Employee' };
+    const map: Record<string, string> = {
+      admin: 'Admin',
+      manager: 'Manager',
+      it_manager: 'IT Manager',
+      finance: 'Finance Manager',
+      user: 'Employee',
+    };
     return map[role] || role;
   }
 
   getRoleClass(role: string): string {
-    const map: Record<string, string> = { admin: 'danger', manager: 'primary', it_manager: 'info', user: 'secondary' };
+    const map: Record<string, string> = {
+      admin: 'danger',
+      manager: 'primary',
+      it_manager: 'info',
+      finance: 'success',
+      user: 'secondary',
+    };
     return map[role] || 'secondary';
   }
 

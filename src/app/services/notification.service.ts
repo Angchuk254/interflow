@@ -1,6 +1,12 @@
 import { Injectable, inject, signal, effect } from '@angular/core';
 import { Api } from './api';
 import type { Notification } from '../interfaces/database.types';
+
+/** Optional FKs for DB triggers to delete rows when project/task is soft-deleted. */
+export type NotificationEntityRefs = {
+  projectId?: string;
+  taskId?: string;
+};
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
 @Injectable({
@@ -128,7 +134,8 @@ export class NotificationService {
     type: string,
     title: string,
     body?: string,
-    link?: string
+    link?: string,
+    refs?: NotificationEntityRefs,
   ): Promise<void> {
     await this.api.supabase.from('notifications').insert({
       user_id: userId,
@@ -136,6 +143,8 @@ export class NotificationService {
       title,
       body,
       link,
+      ...(refs?.projectId != null ? { project_id: refs.projectId } : {}),
+      ...(refs?.taskId != null ? { task_id: refs.taskId } : {}),
     });
   }
 
@@ -144,7 +153,8 @@ export class NotificationService {
     title: string,
     body?: string,
     link?: string,
-    excludeUserId?: string
+    excludeUserId?: string,
+    refs?: NotificationEntityRefs,
   ): Promise<void> {
     const { data: users } = await this.api.supabase
       .from('profiles')
@@ -161,6 +171,8 @@ export class NotificationService {
         title,
         body,
         link,
+        ...(refs?.projectId != null ? { project_id: refs.projectId } : {}),
+        ...(refs?.taskId != null ? { task_id: refs.taskId } : {}),
       }));
 
     if (notifications.length > 0) {
@@ -173,7 +185,8 @@ export class NotificationService {
     type: string,
     title: string,
     body?: string,
-    link?: string
+    link?: string,
+    refs?: NotificationEntityRefs,
   ): Promise<void> {
     if (userIds.length === 0) return;
 
@@ -183,6 +196,8 @@ export class NotificationService {
       title,
       body,
       link,
+      ...(refs?.projectId != null ? { project_id: refs.projectId } : {}),
+      ...(refs?.taskId != null ? { task_id: refs.taskId } : {}),
     }));
 
     await this.api.supabase.from('notifications').insert(notifications);

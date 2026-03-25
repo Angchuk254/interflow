@@ -2,7 +2,9 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { Api } from '../services/api';
 
-export function roleGuard(allowedRoles: ('admin' | 'manager' | 'user' | 'it_manager')[]): CanActivateFn {
+export function roleGuard(
+  allowedRoles: ('admin' | 'manager' | 'user' | 'it_manager' | 'finance')[],
+): CanActivateFn {
   return async () => {
     const api = inject(Api);
     const router = inject(Router);
@@ -21,6 +23,9 @@ export function roleGuard(allowedRoles: ('admin' | 'manager' | 'user' | 'it_mana
 
 export const adminGuard: CanActivateFn = roleGuard(['admin']);
 export const adminOrManagerGuard: CanActivateFn = roleGuard(['admin', 'manager']);
+/** Project finance: PMs create estimates; finance staff may also open this page to review/delete. */
+export const adminManagerOrFinanceGuard: CanActivateFn = roleGuard(['admin', 'manager', 'finance']);
 export const userOnlyGuard: CanActivateFn = roleGuard(['user']);
 export const itManagerGuard: CanActivateFn = roleGuard(['it_manager']);
 export const adminOrItManagerGuard: CanActivateFn = roleGuard(['admin', 'it_manager']);
+export const financeGuard: CanActivateFn = roleGuard(['finance', 'admin']);

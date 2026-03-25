@@ -30,6 +30,7 @@ export class Api {
   readonly isManager = computed(() => this.userRole() === 'manager');
   readonly isUser = computed(() => this.userRole() === 'user');
   readonly isItManager = computed(() => this.userRole() === 'it_manager');
+  readonly isFinance = computed(() => this.userRole() === 'finance');
   readonly initialized = signal(false);
   readonly isLoading = signal(false);
   readonly errorMessage = signal<string | null>(null);

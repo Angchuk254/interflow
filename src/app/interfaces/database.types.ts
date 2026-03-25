@@ -6,7 +6,7 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export type UserRole = 'admin' | 'manager' | 'user' | 'it_manager';
+export type UserRole = 'admin' | 'manager' | 'user' | 'it_manager' | 'finance';
 export type UserStatus = 'invited' | 'active' | 'deactivated';
 export type Priority = 'high' | 'medium' | 'low';
 export type ProjectStatus = 'not_started' | 'in_progress' | 'completed' | 'delayed' | 'on_hold';
@@ -219,8 +219,63 @@ export interface Notification {
   title: string;
   body: string | null;
   link: string | null;
+  /** Set for project-scoped notifications; removed when project is soft-deleted. */
+  project_id?: string | null;
+  /** Set for task-scoped notifications; removed when task is soft-deleted. */
+  task_id?: string | null;
   is_read: boolean;
   created_at: string;
+}
+
+export type FinanceEstimateStatus = 'draft' | 'submitted' | 'approved';
+
+export interface ProjectFinanceEstimate {
+  id: string;
+  submitted_by: string;
+  project_id: string | null;
+  custom_title: string | null;
+  /** When set (usually with project_id), overrides project title in lists / PDFs. */
+  display_name?: string | null;
+  client_name?: string | null;
+  company_name?: string | null;
+  margin_percent: number;
+  status: FinanceEstimateStatus;
+  created_at: string;
+  updated_at: string;
+  submitter?: Pick<Profile, 'id' | 'full_name' | 'email'>;
+  /** Present when project_id is set (nested select). */
+  project?: { title: string } | null;
+}
+
+export interface FinanceEstimateLine {
+  id: string;
+  estimate_id: string;
+  sort_order: number;
+  resource_label: string;
+  hours: number;
+  rate_per_hour: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Stored inside revision lines_snapshot JSON. */
+export interface FinanceEstimateRevisionLine {
+  resource_label: string;
+  hours: number;
+  rate_per_hour: number;
+  line_total: number;
+}
+
+export interface FinanceEstimateRevision {
+  id: string;
+  estimate_id: string;
+  created_at: string;
+  actor_id: string;
+  summary: string;
+  margin_percent: number;
+  status: FinanceEstimateStatus;
+  lines_snapshot: FinanceEstimateRevisionLine[];
+  actor?: Pick<Profile, 'full_name' | 'email'>;
 }
 
 export type ItTicketStatus = 'open' | 'in_progress' | 'resolved' | 'closed';

@@ -8,7 +8,7 @@ interface NavItem {
   label: string;
   icon: string;
   route: string;
-  roles?: ('admin' | 'manager' | 'user' | 'it_manager')[];
+  roles?: ('admin' | 'manager' | 'user' | 'it_manager' | 'finance')[];
 }
 
 @Component({
@@ -45,15 +45,36 @@ export class Layout {
     { label: 'Interest Requests', icon: 'bi-hand-index', route: '/interests', roles: ['admin', 'manager'] },
     { label: 'Team', icon: 'bi-people', route: '/team', roles: ['admin', 'manager'] },
     { label: 'Time Logs', icon: 'bi-clock-history', route: '/time-logs', roles: ['admin', 'manager'] },
-    
+    {
+      label: 'Project finance',
+      icon: 'bi-cash-coin',
+      route: '/project-finance',
+      roles: ['admin', 'manager'],
+    },
+
     // Admin only
     { label: 'User Management', icon: 'bi-person-gear', route: '/users', roles: ['admin'] },
     { label: 'Activity Log', icon: 'bi-activity', route: '/activity', roles: ['admin'] },
 
-    // IT Support - All can create & view; IT manager manages; Admin view-only
-    { label: 'IT Support', icon: 'bi-ticket-perforated', route: '/it-support' },
+    // IT Support — not shown to finance (minimal nav for finance role)
+    {
+      label: 'IT Support',
+      icon: 'bi-ticket-perforated',
+      route: '/it-support',
+      roles: ['admin', 'manager', 'user', 'it_manager'],
+    },
     
     // Common - Calendar & Settings
+    { label: 'Calendar', icon: 'bi-calendar3', route: '/calendar' },
+    { label: 'Notifications', icon: 'bi-bell', route: '/notifications' },
+    { label: 'Settings', icon: 'bi-gear', route: '/settings' },
+  ];
+
+  /** Finance Manager: focused nav; dashboard goes straight to finance home. */
+  private readonly financeNavItems: NavItem[] = [
+    { label: 'Dashboard', icon: 'bi-speedometer2', route: '/dashboard/finance' },
+    { label: 'Project finance', icon: 'bi-cash-coin', route: '/project-finance' },
+    { label: 'Search', icon: 'bi-search', route: '/search' },
     { label: 'Calendar', icon: 'bi-calendar3', route: '/calendar' },
     { label: 'Notifications', icon: 'bi-bell', route: '/notifications' },
     { label: 'Settings', icon: 'bi-gear', route: '/settings' },
@@ -62,6 +83,9 @@ export class Layout {
   readonly navItems = computed(() => {
     const role = this.api.userRole();
     if (!role) return [];
+    if (role === 'finance') {
+      return this.financeNavItems;
+    }
     return this.allNavItems.filter((item) => !item.roles || item.roles.includes(role));
   });
 

@@ -28,6 +28,7 @@
       <option value="admin">Admin</option>
       <option value="manager">Manager</option>
       <option value="it_manager">IT Manager</option>
+      <option value="finance">Finance</option>
       <option value="user">Employee</option>
     </select>
   </div>
@@ -117,6 +118,7 @@
             <option value="admin">Admin</option>
             <option value="manager">Manager</option>
             <option value="it_manager">IT Manager</option>
+            <option value="finance">Finance</option>
             <option value="user">Employee</option>
           </select>
           <div class="form-text">
@@ -132,6 +134,10 @@
               @case ('it_manager') {
                 <i class="bi bi-ticket-perforated text-info me-1"></i>
                 Can manage IT support tickets, view who raised what
+              }
+              @case ('finance') {
+                <i class="bi bi-cash-coin text-success me-1"></i>
+                Finance workspace: cost estimates and exports; limited navigation
               }
               @case ('user') {
                 <i class="bi bi-person-fill text-secondary me-1"></i>

@@ -1,5 +1,19 @@
-import { Component, OnInit, AfterViewInit, inject, signal, ViewChild, ElementRef } from '@angular/core';
-import { toLocalDateString } from '../../utils/date';
+import {
+  Component,
+  OnInit,
+  AfterViewInit,
+  inject,
+  signal,
+  ViewChild,
+  ElementRef,
+  ChangeDetectorRef,
+} from '@angular/core';
+import {
+  lastNCalendarDaysIST,
+  shortWeekdayLabelIST,
+  startOfDayAppTimezoneDaysAgo,
+  toLocalDateString,
+} from '../../utils/date';
 import { RouterLink } from '@angular/router';
 import { Chart, registerables } from 'chart.js';
 import { Api } from '../../services/api';
@@ -22,6 +36,7 @@ export class AdminDashboard implements OnInit, AfterViewInit {
   readonly projectService = inject(ProjectService);
   readonly taskService = inject(TaskService);
   readonly userService = inject(UserService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly loading = signal(true);
 
@@ -51,21 +66,37 @@ export class AdminDashboard implements OnInit, AfterViewInit {
   readonly overdueTasks = signal<Task[]>([]);
   readonly recentUsers = signal<Profile[]>([]);
   readonly recentActivity = signal<ActivityLog[]>([]);
+  /** Rows for the weekly chart (must cover the last 7 days, not just recent list rows). */
+  private weeklyActivityTimestamps: { created_at: string }[] = [];
 
   async ngOnInit(): Promise<void> {
     try {
       await this.loadDashboardData();
     } finally {
       this.loading.set(false);
-      // Charts are inside @if (!loading()) - wait for DOM to render
-      setTimeout(() => this.renderCharts(), 150);
+      this.cdr.detectChanges();
+      this.scheduleChartRender();
     }
   }
 
   ngAfterViewInit(): void {}
 
+  /** Canvases live under @if (!loading()); retry until ViewChild refs exist. */
+  private scheduleChartRender(retries = 0): void {
+    const ready =
+      this.projectStatusChartRef?.nativeElement &&
+      this.activityChartRef?.nativeElement;
+    if (ready) {
+      this.renderCharts();
+      return;
+    }
+    if (retries < 30) {
+      requestAnimationFrame(() => this.scheduleChartRender(retries + 1));
+    }
+  }
+
   private async loadDashboardData(): Promise<void> {
-    const [projectStats, taskStats, userStats, projects, interests, overdue, users, activity] =
+    const [projectStats, taskStats, userStats, projects, interests, overdue, users, activity, weekActivity] =
       await Promise.all([
         this.projectService.getProjectStats(),
         this.taskService.getTaskStats(),
@@ -75,6 +106,7 @@ export class AdminDashboard implements OnInit, AfterViewInit {
         this.taskService.getOverdueTasks(),
         this.userService.getUsers(),
         this.loadRecentActivity(),
+        this.loadActivityCreatedAtSinceDays(8),
       ]);
 
     this.stats.set({
@@ -97,6 +129,20 @@ export class AdminDashboard implements OnInit, AfterViewInit {
     this.overdueTasks.set(overdue.slice(0, 5));
     this.recentUsers.set(users.slice(0, 5));
     this.recentActivity.set(activity);
+    this.weeklyActivityTimestamps = weekActivity;
+  }
+
+  /** Enough rows to chart last 7 days (IST calendar days); not limited to 10 recent items. */
+  private async loadActivityCreatedAtSinceDays(days: number): Promise<{ created_at: string }[]> {
+    const start = startOfDayAppTimezoneDaysAgo(days);
+    const { data, error } = await this.api.supabase
+      .from('activity_log')
+      .select('created_at')
+      .gte('created_at', start.toISOString())
+      .order('created_at', { ascending: false })
+      .limit(5000);
+    if (error) return [];
+    return (data as { created_at: string }[]) || [];
   }
 
   private async loadRecentActivity(): Promise<ActivityLog[]> {
@@ -151,16 +197,15 @@ export class AdminDashboard implements OnInit, AfterViewInit {
 
     if (this.activityChart) this.activityChart.destroy();
 
-    const last7Days: string[] = [];
+    const istDays = lastNCalendarDaysIST(7);
+    const last7Days = istDays.map((d) => shortWeekdayLabelIST(d));
     const activityCounts: number[] = [];
-    const activities = this.recentActivity();
+    const activities = this.weeklyActivityTimestamps;
 
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const dateStr = toLocalDateString(d);
-      last7Days.push(d.toLocaleDateString('en-US', { weekday: 'short' }));
-      activityCounts.push(activities.filter(a => a.created_at.split('T')[0] === dateStr).length);
+    for (const dateStr of istDays) {
+      activityCounts.push(
+        activities.filter((a) => toLocalDateString(new Date(a.created_at)) === dateStr).length,
+      );
     }
 
     this.activityChart = new Chart(ctx, {

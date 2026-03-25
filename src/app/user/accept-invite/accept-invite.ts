@@ -183,6 +183,7 @@ export class AcceptInvite implements OnInit {
       admin: 'Administrator',
       manager: 'Project Manager',
       it_manager: 'IT Manager',
+      finance: 'Finance',
       user: 'Team Member',
     };
     return labels[role] || 'Team Member';

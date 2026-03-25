@@ -22,6 +22,7 @@ export class Settings {
   readonly showCurrentPassword = signal(false);
   readonly showNewPassword = signal(false);
   readonly showConfirmPassword = signal(false);
+  readonly message = signal<{ type: 'success' | 'error'; text: string } | null>(null);
 
   settings = {
     emailNotifications: true,
@@ -84,11 +85,11 @@ export class Settings {
       if (error) throw error;
       this.passwordForm = { currentPassword: '', newPassword: '', confirmPassword: '' };
       this.passwordTouched.set(false);
-      this.snackbar.success('Password changed successfully. Logging out...');
+      this.snackbar.success('Password changed successfully. Logging out...', 5000);
       setTimeout(async () => {
         await this.api.signOut();
         await this.router.navigate(['/login']);
-      }, 1200);
+      }, 2200);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to update password';
       this.snackbar.error(msg);

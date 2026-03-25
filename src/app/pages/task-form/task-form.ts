@@ -101,7 +101,8 @@ export class TaskForm implements OnInit {
           'task',
           `New task assigned: ${this.form.title}`,
           `${currentUserName} assigned you to "${this.form.title}" in project "${project.title}"`,
-          `/projects/${project.id}`
+          `/projects/${project.id}`,
+          { projectId: project.id, taskId: task.id },
         );
       }
 

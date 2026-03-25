@@ -426,7 +426,8 @@ export class ProjectDetail implements OnInit {
           'mention',
           `${currentUserName} mentioned you in "${project.title}"`,
           commentText.substring(0, 100) + (commentText.length > 100 ? '...' : ''),
-          `/projects/${project.id}`
+          `/projects/${project.id}`,
+          { projectId: project.id },
         );
       }
 
@@ -447,7 +448,8 @@ export class ProjectDetail implements OnInit {
           'comment',
           `New comment on "${project.title}"`,
           `${currentUserName}: ${commentText.substring(0, 100)}${commentText.length > 100 ? '...' : ''}`,
-          `/projects/${project.id}`
+          `/projects/${project.id}`,
+          { projectId: project.id },
         );
       }
       

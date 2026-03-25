@@ -1,0 +1,634 @@
+<div class="page project-finance">
+  <div class="page__header">
+    <div>
+      <h1 class="page__title">Project finance</h1>
+      <p class="page__subtitle">
+        Build a cost estimate for Finance: name the work, add line items (hours × rate), then submit. You can edit again until Finance
+        <strong>approves</strong>.
+        @if (isAdminView()) {
+          <span class="d-block mt-2">
+            @if (api.isAdmin()) {
+              <span class="badge rounded-pill pf-badge-admin">Admin</span>
+            } @else {
+              <span class="badge rounded-pill pf-badge-admin">Finance</span>
+            }
+            You see every estimate your team submitted—same inbox as the Finance workspace, scoped for oversight.
+          </span>
+        }
+      </p>
+    </div>
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+      <button type="button" class="btn btn-primary" (click)="startNewEstimate()">
+        <i class="bi bi-plus-lg me-2"></i> New estimate
+      </button>
+      <a routerLink="/projects" class="btn btn-outline-primary">
+        <i class="bi bi-folder me-2"></i> Open projects
+      </a>
+    </div>
+  </div>
+
+  <!-- What this page is for (single glance) -->
+  <div class="pf-guide card border-0 shadow-sm mb-4">
+    <div class="card-body p-3 p-md-4">
+      <div class="d-flex align-items-start gap-2 mb-2">
+        <i class="bi bi-info-circle text-primary fs-5 flex-shrink-0 mt-1"></i>
+        <div>
+          <strong class="d-block">What happens on this page</strong>
+          <p class="small text-muted mb-0 mt-1">
+            @if (isAdminView()) {
+              Use <strong>Inbox</strong> below, then <strong>New estimate</strong> or <strong>Open</strong>—the editor opens in a window. Filter by status and by
+              <strong>category</strong> (project-linked vs custom title). “Resource / role” is the <em>type of work</em> per row—not a separate menu.
+            } @else {
+              Your list is below. <strong>New estimate</strong> or <strong>Open</strong> launches the editor in a window: name the work, add cost lines, submit to Finance.
+              <strong>History</strong> lives inside that window. “Resource / role” means the <em>type of work</em> for each row—not a separate menu.
+            }
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION A: Inbox -->
+  <section class="pf-section mb-4" aria-labelledby="pf-heading-inbox">
+    <header class="pf-section__head mb-3">
+      <span class="pf-section__kicker">Inbox</span>
+      <h2 id="pf-heading-inbox" class="pf-section__title">
+        @if (isAdminView()) {
+          All project finance estimates
+        } @else {
+          Your submitted estimates
+        }
+      </h2>
+      <p class="pf-section__lede small text-muted mb-0">
+        @if (isAdminView()) {
+          Every estimate managers sent to Finance appears here. Filter by status and category, then <strong>Open</strong> to edit in a window.
+        } @else {
+          Every estimate you sent to Finance is listed here. <strong>Open</strong> edits it in a window. The list updates when Finance changes numbers or approves.
+        }
+      </p>
+    </header>
+
+    <div class="row g-3 mb-3 pf-stat-row">
+      <div class="col-sm-6 col-lg-4">
+        <div class="pf-stat pf-stat--total">
+          <span class="pf-stat__label">Total in list</span>
+          <span class="pf-stat__value">{{ inboxStats().total }}</span>
+        </div>
+      </div>
+      <div class="col-sm-6 col-lg-4">
+        <div class="pf-stat pf-stat--pending">
+          <span class="pf-stat__label">Waiting for approval</span>
+          <span class="pf-stat__value">{{ inboxStats().pending }}</span>
+        </div>
+      </div>
+      <div class="col-sm-6 col-lg-4">
+        <div class="pf-stat pf-stat--ok">
+          <span class="pf-stat__label">Approved</span>
+          <span class="pf-stat__value">{{ inboxStats().approved }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm pf-section__card pf-inbox-card">
+      <div class="card-body p-4">
+        <div class="pf-inbox-toolbar mb-3 pb-3 border-bottom">
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-2">
+            <div class="btn-group" role="group" aria-label="Filter by status">
+              <button
+                type="button"
+                class="btn btn-sm"
+                [class.btn-primary]="inboxFilter() === 'all'"
+                [class.btn-outline-secondary]="inboxFilter() !== 'all'"
+                (click)="setInboxFilter('all')"
+              >
+                All
+                <span class="badge rounded-pill ms-1" [class.bg-light]="inboxFilter() === 'all'" [class.text-dark]="inboxFilter() === 'all'">{{
+                  inboxStats().total
+                }}</span>
+              </button>
+              <button
+                type="button"
+                class="btn btn-sm"
+                [class.btn-primary]="inboxFilter() === 'submitted'"
+                [class.btn-outline-secondary]="inboxFilter() !== 'submitted'"
+                (click)="setInboxFilter('submitted')"
+              >
+                Waiting
+                <span class="badge rounded-pill ms-1" [class.bg-light]="inboxFilter() === 'submitted'" [class.text-dark]="inboxFilter() === 'submitted'">{{
+                  inboxStats().pending
+                }}</span>
+              </button>
+              <button
+                type="button"
+                class="btn btn-sm"
+                [class.btn-primary]="inboxFilter() === 'approved'"
+                [class.btn-outline-secondary]="inboxFilter() !== 'approved'"
+                (click)="setInboxFilter('approved')"
+              >
+                Approved
+                <span class="badge rounded-pill ms-1" [class.bg-light]="inboxFilter() === 'approved'" [class.text-dark]="inboxFilter() === 'approved'">{{
+                  inboxStats().approved
+                }}</span>
+              </button>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-primary" (click)="startNewEstimate()">
+              <i class="bi bi-plus-lg me-1"></i> New estimate
+            </button>
+          </div>
+          <div class="d-flex flex-wrap align-items-center gap-2">
+            <span class="small text-muted fw-semibold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.06em">Category</span>
+            <div class="btn-group" role="group" aria-label="Filter by category">
+              <button
+                type="button"
+                class="btn btn-sm"
+                [class.btn-dark]="inboxCategoryFilter() === 'all'"
+                [class.btn-outline-secondary]="inboxCategoryFilter() !== 'all'"
+                (click)="setInboxCategoryFilter('all')"
+              >
+                All types
+              </button>
+              <button
+                type="button"
+                class="btn btn-sm"
+                [class.btn-dark]="inboxCategoryFilter() === 'linked'"
+                [class.btn-outline-secondary]="inboxCategoryFilter() !== 'linked'"
+                (click)="setInboxCategoryFilter('linked')"
+              >
+                <i class="bi bi-link-45deg me-1"></i>Linked project
+                <span class="badge rounded-pill ms-1 bg-secondary">{{ inboxStats().linked }}</span>
+              </button>
+              <button
+                type="button"
+                class="btn btn-sm"
+                [class.btn-dark]="inboxCategoryFilter() === 'custom'"
+                [class.btn-outline-secondary]="inboxCategoryFilter() !== 'custom'"
+                (click)="setInboxCategoryFilter('custom')"
+              >
+                <i class="bi bi-pencil-square me-1"></i>Custom title
+                <span class="badge rounded-pill ms-1 bg-secondary">{{ inboxStats().custom }}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        @if (loadingInbox()) {
+          <p class="text-muted small mb-0"><span class="spinner-border spinner-border-sm me-2" role="status"></span> Loading estimates…</p>
+        } @else if (inboxEstimates().length === 0) {
+          <p class="text-muted small mb-0">
+            Nothing here yet. Use <strong>New estimate</strong> above, complete the form in the window, then submit to Finance.
+          </p>
+        } @else if (filteredInbox().length === 0) {
+          <p class="text-muted small mb-0">
+            No estimates match the current status and category filters.
+            <button type="button" class="btn btn-link btn-sm p-0 align-baseline" (click)="clearInboxFilters()">Clear filters</button>
+          </p>
+        } @else {
+          <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle mb-0 my-estimates-table">
+              <thead class="text-muted small">
+                <tr>
+                  <th scope="col">Project / title</th>
+                  <th scope="col" style="width: 8rem">Category</th>
+                  @if (isAdminView()) {
+                    <th scope="col" style="width: 10rem">Submitted by</th>
+                  }
+                  <th scope="col" style="width: 7rem">Status</th>
+                  <th scope="col" style="width: 11rem">Last updated</th>
+                  <th scope="col" style="width: 9.5rem"><span class="visually-hidden">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of filteredInbox(); track row.id) {
+                  <tr [class.table-active]="savedEstimateId() === row.id">
+                    <td>
+                      <div class="fw-medium">{{ estimateTitle(row) }}</div>
+                      @if (estimateClientCompanyLine(row)) {
+                        <div class="small text-muted mt-1">{{ estimateClientCompanyLine(row) }}</div>
+                      }
+                    </td>
+                    <td>
+                      @if (rowCategory(row) === 'linked') {
+                        <span class="badge rounded-pill pf-cat pf-cat--linked"><i class="bi bi-folder2 me-1"></i>Project</span>
+                      } @else {
+                        <span class="badge rounded-pill pf-cat pf-cat--custom"><i class="bi bi-pencil-square me-1"></i>Custom</span>
+                      }
+                    </td>
+                    @if (isAdminView()) {
+                      <td class="small text-muted">{{ submitterLabel(row) }}</td>
+                    }
+                    <td>
+                      @if (row.status === 'approved') {
+                        <span class="badge rounded-pill pf-badge-approved">Approved</span>
+                      } @else {
+                        <span class="badge rounded-pill pf-badge-waiting">Waiting</span>
+                      }
+                    </td>
+                    <td class="small text-muted">{{ formatEstimateWhen(row.updated_at) }}</td>
+                    <td>
+                      <div class="d-flex flex-wrap gap-1 justify-content-end">
+                        <button type="button" class="btn btn-sm btn-outline-primary py-0" (click)="openMyEstimate(row.id)">
+                          Open
+                        </button>
+                        @if (canDeleteEstimate(row)) {
+                          <button
+                            type="button"
+                            class="btn btn-sm btn-outline-danger py-0"
+                            [disabled]="deleting()"
+                            (click)="requestDeleteFromInbox(row, $event)"
+                          >
+                            Delete
+                          </button>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Estimate editor (modal) -->
+  @if (estimateEditorOpen()) {
+    <div class="pf-modal-backdrop" (click)="closeEstimateModal()"></div>
+    <div class="pf-modal-dialog pf-modal-dialog--wide" role="dialog" aria-modal="true" aria-labelledby="pf-modal-title">
+      <div class="pf-modal-content">
+          <div class="pf-modal-header">
+            <div class="flex-grow-1 min-w-0 pe-2">
+              <span class="pf-modal-kicker">Estimate</span>
+              <h2 id="pf-modal-title" class="pf-modal-title text-truncate">{{ modalTitle() }}</h2>
+              <p class="pf-modal-sub small text-muted mb-0">Two steps: name the work, then cost lines. Submit sends updates to Finance.</p>
+            </div>
+            <button type="button" class="btn btn-link text-secondary p-1 pf-modal-close" (click)="closeEstimateModal()" aria-label="Close">
+              <i class="bi bi-x-lg fs-4" aria-hidden="true"></i>
+            </button>
+          </div>
+          <div class="pf-modal-body">
+    <!-- Mini step indicator -->
+    <div class="pf-steps card border-0 shadow-sm mb-3">
+      <div class="card-body py-3 px-3 px-md-4">
+        <div class="pf-steps__row d-flex flex-wrap align-items-center gap-2 gap-md-3">
+          <div class="pf-steps__item" [class.pf-steps__item--active]="step() === 1" [class.pf-steps__item--done]="step() === 2">
+            <span class="pf-steps__num">1</span>
+            <span class="pf-steps__label">Name</span>
+            <span class="pf-steps__hint d-none d-sm-inline text-muted small">Project or custom title</span>
+          </div>
+          <i class="bi bi-chevron-right text-muted small d-none d-sm-block"></i>
+          <div class="pf-steps__item" [class.pf-steps__item--active]="step() === 2">
+            <span class="pf-steps__num">2</span>
+            <span class="pf-steps__label">Cost breakdown</span>
+            <span class="pf-steps__hint d-none d-sm-inline text-muted small">Hours × rate per row</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    @if (step() === 1) {
+      <div class="card border-0 shadow-sm pf-section__card">
+        <div class="card-body p-4">
+          <h3 class="h6 text-uppercase text-muted letter-spacing mb-3">Step 1 — What is this estimate for?</h3>
+          <p class="text-muted small mb-3">
+            Either pick an <strong>existing IntraFlow project</strong> or type a <strong>custom name</strong> (e.g. a client proposal not in
+            the system yet).
+          </p>
+
+          <div class="btn-group mb-3" role="group" aria-label="Project name source">
+            <button
+              type="button"
+              class="btn btn-sm"
+              [class.btn-primary]="projectNameMode === 'existing'"
+              [class.btn-outline-primary]="projectNameMode !== 'existing'"
+              (click)="setNameMode('existing')"
+              [disabled]="isLocked()"
+            >
+              Existing project
+            </button>
+            <button
+              type="button"
+              class="btn btn-sm"
+              [class.btn-primary]="projectNameMode === 'custom'"
+              [class.btn-outline-primary]="projectNameMode !== 'custom'"
+              (click)="setNameMode('custom')"
+              [disabled]="isLocked()"
+            >
+              Custom name
+            </button>
+          </div>
+
+          @if (projectNameMode === 'existing') {
+            @if (loadingProjects()) {
+              <p class="text-muted small mb-0">Loading projects…</p>
+            } @else if (projects().length === 0) {
+              <p class="text-warning small mb-2">No projects found. Create one under Projects, or use <strong>Custom name</strong>.</p>
+            }
+            <label class="form-label small text-muted" for="estimateProjectId">Select project</label>
+            <select
+              id="estimateProjectId"
+              class="form-select"
+              [(ngModel)]="selectedProjectId"
+              name="estimateProjectId"
+              [disabled]="loadingProjects() || isLocked()"
+            >
+              <option value="">— Choose —</option>
+              @for (p of projects(); track p.id) {
+                <option [value]="p.id">{{ p.title }}</option>
+              }
+            </select>
+          } @else {
+            <label class="form-label small text-muted" for="customProjectName">Custom project / proposal name</label>
+            <input
+              id="customProjectName"
+              type="text"
+              class="form-control"
+              [(ngModel)]="customProjectName"
+              name="customProjectName"
+              placeholder="e.g. Client X – mobile app proposal (Q2)"
+              autocomplete="off"
+              [disabled]="isLocked()"
+            />
+            <p class="form-text mb-0">Use this when the work is not tied to a project record yet.</p>
+          }
+
+          @if (projectNameMode === 'existing') {
+            <div class="mt-3">
+              <label class="form-label small text-muted" for="pfDisplayName">Display title for finance (optional)</label>
+              <input
+                id="pfDisplayName"
+                type="text"
+                class="form-control"
+                [(ngModel)]="displayNameOverride"
+                name="pfDisplayName"
+                placeholder="Overrides the project name above in Finance lists and PDFs"
+                autocomplete="off"
+                [disabled]="isLocked()"
+              />
+              @if (displayNameOverride.trim() && linkedProjectTitle()) {
+                <p class="form-text mb-0 small">Linked project: <strong>{{ linkedProjectTitle() }}</strong></p>
+              }
+            </div>
+          }
+
+          <div class="row g-3 mt-1">
+            <div class="col-md-6">
+              <label class="form-label small text-muted" for="pfClientName">Client name</label>
+              <input
+                id="pfClientName"
+                type="text"
+                class="form-control"
+                [(ngModel)]="clientName"
+                name="pfClientName"
+                placeholder="e.g. Jane Doe"
+                autocomplete="off"
+                [disabled]="isLocked()"
+              />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small text-muted" for="pfCompanyName">Company name</label>
+              <input
+                id="pfCompanyName"
+                type="text"
+                class="form-control"
+                [(ngModel)]="companyName"
+                name="pfCompanyName"
+                placeholder="e.g. Acme Corp"
+                autocomplete="off"
+                [disabled]="isLocked()"
+              />
+            </div>
+          </div>
+
+          <div class="estimate-label-preview mt-3 pt-3 border-top">
+            <span class="text-muted small">Listed in Finance as:</span>
+            <strong class="d-block mt-1">{{ effectiveProjectLabel() }}</strong>
+            @if (previewClientCompanyLine()) {
+              <span class="small text-muted d-block mt-1">{{ previewClientCompanyLine() }}</span>
+            }
+          </div>
+
+          <div class="mt-4 d-flex flex-wrap gap-2">
+            <button
+              type="button"
+              class="btn btn-primary"
+              [disabled]="!canContinueStep1()"
+              (click)="continueToStep2()"
+            >
+              Next: cost breakdown <i class="bi bi-arrow-right ms-1"></i>
+            </button>
+            @if (!canContinueStep1()) {
+              <span class="text-muted small align-self-center">Choose a project or enter a name first.</span>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm mt-3 bg-light">
+        <div class="card-body p-3">
+          <p class="small text-muted mb-0">
+            <i class="bi bi-bank me-1"></i> Finance reviews in <strong>Finance workspace</strong>. You can keep editing here until they
+            <strong>approve</strong>.
+          </p>
+        </div>
+      </div>
+    } @else {
+      <div class="card border-0 shadow-sm mb-3 pf-section__card">
+        <div class="card-body p-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
+          <div>
+            <span class="text-muted small">Estimate title</span>
+            <strong class="d-block">{{ effectiveProjectLabel() }}</strong>
+            @if (previewClientCompanyLine()) {
+              <span class="small text-muted d-block mt-1">{{ previewClientCompanyLine() }}</span>
+            }
+          </div>
+          <button type="button" class="btn btn-outline-secondary btn-sm" (click)="backToStep1()" [disabled]="isLocked()">
+            <i class="bi bi-arrow-left me-1"></i> Back to name step
+          </button>
+        </div>
+      </div>
+
+      @if (liveSync() && savedEstimateId()) {
+        <div class="alert alert-info py-2 px-3 small mb-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
+          <span><i class="bi bi-broadcast-pin me-1"></i> Live sync — Finance edits show here automatically.</span>
+          @if (estimateStatus() === 'approved') {
+            <span class="badge bg-success">Approved</span>
+          } @else if (estimateStatus() === 'submitted') {
+            <span class="badge bg-primary">With Finance</span>
+          }
+        </div>
+      }
+
+      <div class="card border-0 shadow-sm mb-4 pf-section__card">
+        <div class="card-body p-4">
+          <h3 class="h6 text-uppercase text-muted letter-spacing mb-2">Step 2 — Cost breakdown</h3>
+          <p class="text-muted small mb-3">
+            Each <strong>row</strong> is one line of cost: what kind of work (column “Resource / role”), how many <strong>hours</strong>, and
+            <strong>rate per hour</strong>. Add more rows with <strong>Add row</strong>. Margin is applied to the subtotal at the bottom.
+            @if (isLocked()) {
+              <strong class="text-success d-block mt-1">Approved — this estimate is view only.</strong>
+            }
+          </p>
+
+          <div class="table-responsive">
+            <table class="table table-sm align-middle estimate-table">
+              <thead>
+                <tr>
+                  <th scope="col">Resource / role <span class="fw-normal text-muted">(type of work)</span></th>
+                  <th style="width: 7rem">Hours</th>
+                  <th style="width: 7rem">Rate / hr</th>
+                  <th style="width: 8rem" class="text-end">Line total</th>
+                  <th style="width: 3rem"><span class="visually-hidden">Remove</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (line of lines; track line.id; let i = $index) {
+                  <tr>
+                    <td>
+                      <input
+                        type="text"
+                        class="form-control form-control-sm"
+                        [(ngModel)]="line.resourceLabel"
+                        [name]="'res' + line.id"
+                        placeholder="e.g. Senior developer, QA"
+                        [disabled]="isLocked()"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        class="form-control form-control-sm"
+                        min="0"
+                        step="0.25"
+                        [(ngModel)]="line.hours"
+                        [name]="'h' + line.id"
+                        [disabled]="isLocked()"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        class="form-control form-control-sm"
+                        min="0"
+                        step="100"
+                        [(ngModel)]="line.ratePerHour"
+                        [name]="'r' + line.id"
+                        [disabled]="isLocked()"
+                      />
+                    </td>
+                    <td class="text-end font-monospace small">{{ lineAmount(line) | number : '1.0-2' }}</td>
+                    <td>
+                      <button
+                        type="button"
+                        class="btn btn-link btn-sm text-danger p-0"
+                        (click)="removeLine(i)"
+                        [disabled]="lines.length <= 1 || isLocked()"
+                        title="Remove row"
+                      >
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <button type="button" class="btn btn-outline-primary btn-sm mb-4" (click)="addLine()" [disabled]="isLocked()">
+            <i class="bi bi-plus-lg me-1"></i> Add row
+          </button>
+
+          <div class="row g-3 align-items-end border-top pt-3">
+            <div class="col-sm-4 col-md-3">
+              <label class="form-label small text-muted">Margin % (on subtotal)</label>
+              <div class="input-group input-group-sm">
+                <input
+                  type="number"
+                  class="form-control"
+                  min="0"
+                  step="0.5"
+                  [(ngModel)]="marginPercent"
+                  name="marginPct"
+                  [disabled]="isLocked()"
+                />
+                <span class="input-group-text">%</span>
+              </div>
+            </div>
+            <div class="col-sm-8 col-md-9">
+              <div class="totals-box p-3 rounded">
+                <div class="d-flex justify-content-between small">
+                  <span class="text-muted">Subtotal</span>
+                  <span class="font-monospace">{{ getSubtotal() | number : '1.0-2' }}</span>
+                </div>
+                <div class="d-flex justify-content-between small mt-1">
+                  <span class="text-muted">With margin ({{ marginPercent }}%)</span>
+                  <span class="font-monospace fw-semibold text-primary">{{ getTotalWithMargin() | number : '1.0-2' }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 d-flex flex-wrap gap-2 align-items-center">
+            <button type="button" class="btn btn-primary" (click)="submitToFinance()" [disabled]="saving() || isLocked()">
+              @if (saving()) {
+                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+              } @else {
+                <i class="bi bi-send me-2"></i>
+              }
+              {{ savedEstimateId() ? 'Save & send update to Finance' : 'Submit to Finance' }}
+            </button>
+            @if (savedEstimateId()) {
+              <button type="button" class="btn btn-outline-secondary btn-sm" (click)="startNewEstimate()">Start new estimate</button>
+              @if (canDeleteCurrentEstimate()) {
+                <button
+                  type="button"
+                  class="btn btn-outline-danger btn-sm"
+                  (click)="requestDeleteFromModal()"
+                  [disabled]="deleting()"
+                >
+                  @if (deleting()) {
+                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                  }
+                  Delete estimate
+                </button>
+              }
+            }
+            <span class="text-muted small">Saves to the server; Finance sees updates in their inbox.</span>
+          </div>
+        </div>
+      </div>
+
+      @if (savedEstimateId()) {
+        <app-estimate-revision-history
+          [estimateId]="savedEstimateId()"
+          [refreshToken]="historyRefresh()"
+          class="mb-3"
+        />
+      }
+    }
+          </div>
+        </div>
+      </div>
+  }
+
+  @if (deletePrompt()) {
+    <div class="pf-delete-prompt" role="dialog" aria-modal="true" aria-labelledby="pf-delete-title">
+      <div class="card border-0 shadow-lg m-2 m-md-3">
+        <div class="card-body py-3 d-flex flex-wrap align-items-center justify-content-between gap-3">
+          <div id="pf-delete-title" class="small mb-0">
+            Delete <strong>{{ deletePrompt()!.title }}</strong>? This cannot be undone.
+          </div>
+          <div class="btn-group btn-group-sm">
+            <button type="button" class="btn btn-outline-secondary" (click)="cancelDeletePrompt()">Cancel</button>
+            <button type="button" class="btn btn-danger" (click)="confirmDeletePrompt()" [disabled]="deleting()">
+              @if (deleting()) {
+                <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+              }
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

@@ -26,6 +26,7 @@
       <option value="admin">Admin</option>
       <option value="manager">Manager</option>
       <option value="it_manager">IT Manager</option>
+      <option value="finance">Finance Manager</option>
       <option value="user">Employee</option>
     </select>
     <select class="form-select filters__page-size" [ngModel]="pageSize()" (ngModelChange)="changePageSize($event)">
@@ -58,6 +59,10 @@
     <div class="stat-box stat-box--it-manager">
       <span class="stat-box__value">{{ users().filter(u => u.role === 'it_manager').length }}</span>
       <span class="stat-box__label">IT Managers</span>
+    </div>
+    <div class="stat-box stat-box--finance">
+      <span class="stat-box__value">{{ users().filter(u => u.role === 'finance').length }}</span>
+      <span class="stat-box__label">Finance</span>
     </div>
     <div class="stat-box stat-box--user">
       <span class="stat-box__value">{{ users().filter(u => u.role === 'user').length }}</span>
@@ -123,7 +128,7 @@
                 </div>
               </td>
               <td>
-                <span class="badge bg-{{ getRoleClass(user.role) }}">{{ user.role }}</span>
+                <span class="badge bg-{{ getRoleClass(user.role) }}">{{ getRoleLabel(user.role) }}</span>
               </td>
               <td>{{ user.department || '—' }}</td>
               <td>
@@ -242,6 +247,7 @@
             <option value="admin">Admin</option>
             <option value="manager">Manager</option>
             <option value="it_manager">IT Manager</option>
+            <option value="finance">Finance Manager</option>
             <option value="user">Employee</option>
           </select>
           <div class="form-text">
@@ -257,6 +263,10 @@
               @case ('it_manager') {
                 <i class="bi bi-ticket-perforated text-info me-1"></i>
                 Can manage IT support tickets, view who raised what
+              }
+              @case ('finance') {
+                <i class="bi bi-cash-coin text-success me-1"></i>
+                Finance workspace: cost estimates and exports; limited navigation
               }
               @case ('user') {
                 <i class="bi bi-person-fill text-secondary me-1"></i>

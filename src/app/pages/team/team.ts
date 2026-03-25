@@ -139,6 +139,7 @@ export class Team implements OnInit {
       admin: 'Admin',
       manager: 'Manager',
       it_manager: 'IT Manager',
+      finance: 'Finance',
       user: 'Employee',
     };
     return map[role] || role;
@@ -149,6 +150,7 @@ export class Team implements OnInit {
       admin: 'danger',
       manager: 'primary',
       it_manager: 'info',
+      finance: 'success',
       user: 'secondary',
     };
     return map[role] || 'secondary';

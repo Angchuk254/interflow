@@ -1,0 +1,50 @@
+.finance-dashboard {
+  max-width: 1200px;
+}
+
+.dashboard-header {
+  margin-bottom: 1.5rem;
+}
+
+.dashboard-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.dashboard-subtitle {
+  color: #64748b;
+  margin: 0.25rem 0 0;
+  font-size: 0.9375rem;
+}
+
+.finance-placeholder {
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 0.75rem;
+}
+
+.finance-inbox-list .list-group-item.active {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+}
+
+.totals-box {
+  background: #f8fafc;
+}
+
+.fin-delete-prompt {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2000;
+  pointer-events: none;
+
+  .card {
+    pointer-events: auto;
+    border-radius: 12px 12px 0 0;
+    border-top: 3px solid #dc2626;
+    background: #fff;
+  }
+}

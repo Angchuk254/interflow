@@ -140,6 +140,22 @@ export class TaskService {
     await this.updateTaskStatus(id, 'completed');
   }
 
+  /**
+   * Soft-delete a task. Notifications with `task_id` set for this task are removed by a DB trigger.
+   */
+  async softDeleteTask(id: string): Promise<void> {
+    const { error } = await this.api.supabase
+      .from('tasks')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', id)
+      .is('deleted_at', null);
+
+    if (error) {
+      const msg = (error as { message?: string }).message ?? JSON.stringify(error);
+      throw new Error(msg);
+    }
+  }
+
   async reviewTask(id: string, status: 'accepted' | 'changes_requested', note?: string): Promise<void> {
     const userId = this.api.user()?.id;
     if (!userId) throw new Error('Not authenticated');

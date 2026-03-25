@@ -2,6 +2,11 @@
 @import 'bootstrap-icons/font/bootstrap-icons.css';
 @import '@angular/material/prebuilt-themes/azure-blue.css';
 
+/* Above fixed sidebar (z-index 1000) so snackbars and other overlays stay visible */
+.cdk-overlay-container {
+  z-index: 10000;
+}
+
 /* Snackbar error styling - red background for error messages */
 .snackbar-error .mat-mdc-snack-bar-container {
   --mdc-snackbar-container-color: #dc2626;

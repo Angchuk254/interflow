@@ -1,5 +1,12 @@
 import { Injectable, inject } from '@angular/core';
-import { toLocalDateString } from '../utils/date';
+import {
+  addCalendarDaysIST,
+  firstDayOfCurrentMonthIST,
+  firstDayOfCurrentYearIST,
+  startOfWeekSundayIST,
+  subtractCalendarDaysIST,
+  toLocalDateString,
+} from '../utils/date';
 import { Api } from './api';
 import type { TimeLog } from '../interfaces/database.types';
 
@@ -127,15 +134,11 @@ export class TimeTrackingService {
     const targetUserId = userId || this.api.user()?.id;
     if (!targetUserId) return 0;
 
-    const today = new Date();
-    const weekStart = new Date(today);
-    weekStart.setDate(today.getDate() - today.getDay());
-
     const { data, error } = await this.api.supabase
       .from('time_logs')
       .select('hours')
       .eq('user_id', targetUserId)
-      .gte('log_date', toLocalDateString(weekStart));
+      .gte('log_date', startOfWeekSundayIST());
 
     if (error) return 0;
     return data.reduce((sum, log) => sum + Number(log.hours), 0);
@@ -145,39 +148,27 @@ export class TimeTrackingService {
     const targetUserId = userId || this.api.user()?.id;
     if (!targetUserId) return 0;
 
-    const today = new Date();
-    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-
     const { data, error } = await this.api.supabase
       .from('time_logs')
       .select('hours')
       .eq('user_id', targetUserId)
-      .gte('log_date', toLocalDateString(monthStart));
+      .gte('log_date', firstDayOfCurrentMonthIST());
 
     if (error) return 0;
     return data.reduce((sum, log) => sum + Number(log.hours), 0);
   }
 
-  /** Get date range for period (week, month, year). Returns [startDate, endDate] in YYYY-MM-DD. */
+  /** Get date range for period (week, month, year). Returns [startDate, endDate] in YYYY-MM-DD (IST). */
   getDateRangeForPeriod(period: 'week' | 'month' | 'year'): [string, string] {
-    const today = new Date();
-    const endDate = new Date(today);
-    const startDate = new Date(today);
-
+    const today = toLocalDateString(new Date());
     switch (period) {
       case 'week':
-        startDate.setDate(today.getDate() - today.getDay());
-        break;
+        return [startOfWeekSundayIST(), today];
       case 'month':
-        startDate.setDate(1);
-        break;
+        return [firstDayOfCurrentMonthIST(), today];
       case 'year':
-        startDate.setMonth(0);
-        startDate.setDate(1);
-        break;
+        return [firstDayOfCurrentYearIST(), today];
     }
-
-    return [toLocalDateString(startDate), toLocalDateString(endDate)];
   }
 
   /**
@@ -252,11 +243,8 @@ export class TimeTrackingService {
     userId: string,
     lastDays: number = 7
   ): Promise<{ date: string; hours: number }[]> {
-    const end = new Date();
-    const start = new Date();
-    start.setDate(start.getDate() - lastDays);
-    const startStr = toLocalDateString(start);
-    const endStr = toLocalDateString(end);
+    const endStr = toLocalDateString(new Date());
+    const startStr = subtractCalendarDaysIST(endStr, lastDays);
 
     const { data, error } = await this.api.supabase
       .from('time_logs')
@@ -268,10 +256,8 @@ export class TimeTrackingService {
     if (error) return [];
 
     const byDate = new Map<string, number>();
-    for (let d = 0; d <= lastDays; d++) {
-      const d2 = new Date(start);
-      d2.setDate(d2.getDate() + d);
-      byDate.set(toLocalDateString(d2), 0);
+    for (let i = 0; i <= lastDays; i++) {
+      byDate.set(addCalendarDaysIST(startStr, i), 0);
     }
 
     data?.forEach((log) => {
@@ -293,11 +279,8 @@ export class TimeTrackingService {
     const userId = this.api.user()?.id;
     if (!userId) return [];
 
-    const end = new Date();
-    const start = new Date();
-    start.setDate(start.getDate() - lastDays);
-    const startStr = toLocalDateString(start);
-    const endStr = toLocalDateString(end);
+    const endStr = toLocalDateString(new Date());
+    const startStr = subtractCalendarDaysIST(endStr, lastDays);
 
     const { data, error } = await this.api.supabase
       .from('time_logs')
@@ -309,10 +292,8 @@ export class TimeTrackingService {
     if (error) return [];
 
     const byDate = new Map<string, number>();
-    for (let d = 0; d <= lastDays; d++) {
-      const d2 = new Date(start);
-      d2.setDate(d2.getDate() + d);
-      byDate.set(toLocalDateString(d2), 0);
+    for (let i = 0; i <= lastDays; i++) {
+      byDate.set(addCalendarDaysIST(startStr, i), 0);
     }
 
     data?.forEach((log) => {

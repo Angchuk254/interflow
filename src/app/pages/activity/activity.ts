@@ -1,5 +1,14 @@
-import { Component, OnInit, AfterViewInit, inject, signal, ElementRef, ViewChild } from '@angular/core';
-import { toLocalDateString } from '../../utils/date';
+import {
+  Component,
+  OnInit,
+  AfterViewInit,
+  inject,
+  signal,
+  ElementRef,
+  ViewChild,
+  ChangeDetectorRef,
+} from '@angular/core';
+import { lastNCalendarDaysIST, shortWeekdayLabelIST, toLocalDateString } from '../../utils/date';
 import { Chart, registerables } from 'chart.js';
 import { Api } from '../../services/api';
 import type { ActivityLog } from '../../interfaces/database.types';
@@ -22,6 +31,7 @@ interface ActivityStats {
 })
 export class Activity implements OnInit, AfterViewInit {
   readonly api = inject(Api);
+  private readonly cdr = inject(ChangeDetectorRef);
   readonly loading = signal(true);
   readonly activities = signal<ActivityLog[]>([]);
   readonly stats = signal<ActivityStats | null>(null);
@@ -50,12 +60,28 @@ export class Activity implements OnInit, AfterViewInit {
       }
     } finally {
       this.loading.set(false);
-      // Charts are inside @if (stats()) - wait for DOM to render
-      setTimeout(() => this.renderCharts(), 150);
+      this.cdr.detectChanges();
+      this.scheduleChartRender();
     }
   }
 
   ngAfterViewInit(): void {}
+
+  private scheduleChartRender(retries = 0): void {
+    if (!this.stats()) return;
+    const ready =
+      this.dailyChartRef?.nativeElement &&
+      this.actionChartRef?.nativeElement &&
+      this.entityChartRef?.nativeElement &&
+      this.userChartRef?.nativeElement;
+    if (ready) {
+      this.renderCharts();
+      return;
+    }
+    if (retries < 30) {
+      requestAnimationFrame(() => this.scheduleChartRender(retries + 1));
+    }
+  }
 
   private calculateStats(activities: ActivityLog[]): void {
     const dailyMap = new Map<string, number>();
@@ -63,14 +89,8 @@ export class Activity implements OnInit, AfterViewInit {
     const entityMap = new Map<string, number>();
     const userMap = new Map<string, number>();
 
-    const last7Days: string[] = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const dateStr = toLocalDateString(d);
-      last7Days.push(dateStr);
-      dailyMap.set(dateStr, 0);
-    }
+    const last7Days = lastNCalendarDaysIST(7);
+    last7Days.forEach((dateStr) => dailyMap.set(dateStr, 0));
 
     activities.forEach((a) => {
       const date = toLocalDateString(new Date(a.created_at));
@@ -119,10 +139,7 @@ export class Activity implements OnInit, AfterViewInit {
     this.dailyChart = new Chart(ctx, {
       type: 'line',
       data: {
-        labels: data.map((d) => {
-          const date = new Date(d.date);
-          return date.toLocaleDateString('en-US', { weekday: 'short' });
-        }),
+        labels: data.map((d) => shortWeekdayLabelIST(d.date)),
         datasets: [{
           label: 'Activities',
           data: data.map((d) => d.count),
